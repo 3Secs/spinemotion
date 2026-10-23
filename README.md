@@ -1,11 +1,16 @@
-# SpineMotion 2.0 — Interactive & Trustworthy Human Motion Lab
+# SpineMotion 2.0 — 本地人体运动实验室
 
-> **当前状态：Phase 1 已完成并通过构建 / 单元测试 / 浏览器烟雾测试。**
-> Phase 2–6 尚未实现。仓库中不会用静态假页面冒充后续功能。
+> **当前状态：Phase 1–3 已完成，Phase 4 / 5 已整合（MotionProof 质量反馈 + Motion Lab 分析报告）。**
+> 适合 MoonStone 黑客松现场演示的双人动作竞技作品。
 
-SpineMotion 2.0 是一个在浏览器本地运行的人体运动实验室。Phase 1 交付实时姿态捕捉引擎：摄像头画面、MediaPipe Pose Landmarker Lite 单人推理、33 点 Canvas 骨架、实际推理 FPS 与耗时、暂停/恢复/停止、明确的错误处理，以及按源分辨率精确映射的坐标覆盖层。
+SpineMotion 2.0 是一个在浏览器本地运行的人体运动应用：
 
-所有推理均由浏览器本地执行。默认不保存摄像头视频，不上传视频，不调用付费云端 AI API。
+- **Phase 1 · 实时捕捉**：摄像头、MediaPipe Pose Landmarker Lite 单人推理、33 点 Canvas 骨架、真实 FPS / 推理耗时、完整的错误处理。
+- **Phase 2 · Motion Ghost**：关键点动作录制、真实时间轴回放、倍速、半透明参考骨架叠加、本地 JSON 动作库。
+- **Phase 3 · Motion Arena**：双人动作竞技。尺度归一化、DTW 时间对齐、可解释评分（娱乐 / 研究双模式）、双骨架同步回放、关节差异可视化。
+- **Phase 4 / 5 · 已整合**：MotionProof 质量反馈（入镜 / 遮挡提示、质量门控）+ Motion Lab 分析报告（自然语言总结、关节中文名、JSON / CSV 导出）。
+
+所有推理均在浏览器本地执行：**不上传视频，不调用云端 AI**。
 
 ---
 
@@ -15,256 +20,144 @@ SpineMotion 2.0 是一个在浏览器本地运行的人体运动实验室。Phas
 
 1. 在 Finder 中打开项目目录 `/Users/liyahao/mpipe`。
 2. 双击 **`start.command`**。
-3. Chrome 会自动打开：
+3. Chrome 自动打开 **<http://127.0.0.1:5173>**。
+4. 进入 **Motion Arena** 或 **实时捕捉**，点击启动摄像头并允许权限。
 
-   **<http://127.0.0.1:5173>**
-
-   如果 Chrome 没有自动打开，请手动在 Chrome 地址栏输入该地址。
-4. 进入顶部导航的 **实时捕捉**，点击 **启动摄像头**，允许 Chrome 与 macOS 的摄像头权限。
-
-`start.command` 会优先使用项目内 `.tools/node` 的 Node.js；当前工作区已经装好。停止服务器请在该终端窗口按 `Control + C`。
-
-> 若 macOS 第一次阻止 `start.command`：右键该文件 → 打开。也可以在终端运行 `./start.command`。
+`start.command` 优先使用项目内 `.tools/node` 的 Node.js。停止服务器在该终端按 `Control + C`。
 
 ### 终端启动（开发者）
 
 ```bash
 cd /Users/liyahao/mpipe
 export PATH="$PWD/.tools/node/bin:$PATH"
-npm run dev
-```
-
-打开 **<http://127.0.0.1:5173>**。
-
-### 构建与测试
-
-```bash
-export PATH="$PWD/.tools/node/bin:$PATH"
-npm test          # Vitest 单元测试
-npm run build     # tsc -b + Vite 生产构建
-npm run preview   # 预览生产构建：http://127.0.0.1:4173
+npm run dev        # 开发服务器
+npm test           # Vitest 单元测试
+npm run build      # tsc -b + Vite 生产构建
+npm run preview    # 预览生产构建：http://127.0.0.1:4173
 ```
 
 ---
 
-## 2. Phase 1 实际功能
+## 2. 功能一览
 
-### 摄像头与画面
+### Motion Arena（双人竞技）
 
-- 使用 `getUserMedia` 请求摄像头，首选 `1280×720 / 30fps`；浏览器可返回设备实际支持的尺寸。
-- **摄像头设备选择**：可枚举并选择 Mac 内置摄像头、iPhone 连续互通相机和 USB 摄像头；支持 `devicechange` 热插拔刷新。
-- 设备名称需首次授权后才会显示；采集中设备选择锁定，停止后可切换。所选设备启动时使用 `deviceId: { exact }`，不强制固定分辨率。
-- 使用 `HTMLVideoElement` 显示原始画面，`Canvas 2D` 作为透明覆盖层。
-- 预览固定为 **完整原始画面模式**：`object-fit: contain`，`transform: none`、`scale: 1`，不使用 `cover`、数字放大、镜像或窗口裁切。舞台宽高比同步源画面。
-- Canvas 内部尺寸严格等于 `video.videoWidth × video.videoHeight`；Canvas 显示区域与视频、舞台完全重合，归一化坐标乘以源像素尺寸绘制，骨架映射 1:1。
-- 画面**不镜像**，方便核对坐标；界面上明确标注 `NOT MIRRORED`、`CONTAIN` 和源宽高比。
-- 基于关键点进行上肢 / 下肢完整性判断。若完整画面模式下仍缺少头部或下肢，UI 会明确提示这是**摄像头物理视野或站位距离问题，不是页面裁切**，并建议后退、调整俯仰角或关闭 Center Stage / 人像模式。
-- 支持骨架开关、校准网格开关、对应工具提示与状态 HUD。
+- 完整流程：准备 → 玩家 A 录制 → 玩家 B 录制 → 分析 → 结果 → 再来一局。
+- 3 秒倒计时，手动结束 / 自动到时结束。
+- 质量门控：兼容性检查（模式 / 关键关节可见性 / 有效帧）。
+- 娱乐 / 研究两种评分模式（娱乐默认，末端关节降权更友好）。
+- 结果页：综合分 + 姿态分 + 时间分、自然语言总结、双骨架并排 / 重叠回放、关节差异排名（中文名）、差异时段时间轴、JSON / CSV 导出。
+- 解剖标注：关键关节（肩 / 肘 / 腕 / 髋 / 膝 / 踝）中文标注，可在回放中开关。
 
-### 采集模式
+### Motion Ghost（动作数字分身）
 
-- **Upper Body（默认）**：只要求肩、肘、腕至少各一个关键点稳定可见；躯干（髋部）可见性继续展示，但下肢不计入要求。该模式只绘制上半身骨架，适合未来靠近摄像头的 Motion Ghost / Motion Arena 上半身动作。
-- **Full Body**：要求头部、肩部、髋部、膝部、踝/足部均稳定可见且位于原始画面内；缺项时显示 `Full Body 采集条件未满足` 并列出缺少部位，提示调整站位。
-- 模式可在采集中随时切换，立即重新计算质控；不会重启摄像头，也不会改变原始视频的 `contain` 显示或骨架坐标映射。
-- 两种模式都使用同一完整原始画面，禁止通过裁切或数字缩放扩大视野。
+- 5–15 秒动作录制、3 秒倒计时、有效帧统计。
+- 真实时间戳回放、0.5× / 1× / 1.5×、拖动定位。
+- 半透明参考 Ghost 骨架 + 橙色实时骨架，自动身体对齐。
+- 本地动作库、JSON 导入导出。
 
-### 姿态推理
+### 实时捕捉
 
-- `@mediapipe/tasks-vision@1.1.1` + 官方 **Pose Landmarker Lite** 模型。
-- `numPoses = 1`，只识别单个人。
-- `runningMode = VIDEO`，使用视频实际 `currentTime` 映射的单调时间戳，不使用假定固定帧率。
-- 推理循环使用 `setTimeout`，一次只执行一个同步 `detectForVideo`，与屏幕刷新解耦。
-- 默认目标 12 FPS，可切换 10 / 12 / 15 FPS；实际 FPS 来自 1.5 秒滚动窗口，推理耗时为同步调用墙钟时间。
-- 默认 `auto` delegate：优先 GPU，创建失败自动回退 CPU；也可手动选择 GPU 或 CPU（下次启动生效）。
-
-### 录制与清理
-
-- 开始 / 暂停 / 继续 / 停止完整状态机。
-- 暂停时停止推理并禁用视频轨道；继续时恢复轨道与推理。
-- 停止时停止所有 `MediaStreamTrack`、清空 `srcObject`、清空 Canvas 覆盖层与指标。
-- 切换页面或组件卸载时同样释放轨道、关闭 Pose Landmarker。
-
-### 错误与质量提示
-
-- 摄像头权限拒绝、无设备、设备占用、约束不满足、非安全上下文。
-- MediaPipe WASM / 模型加载失败。
-- GPU 创建失败时 UI 显示回退原因。
-- 无人体、所选模式质控未满足、模型推理中断。
-- 根据模式实时展示 Upper Body / Full Body 关键点、核心组就绪状态及 33 点平均可见性。
-- 所有阈值与模式关键点组集中在 `src/config/constants.ts`，并明确标记为工程启发式阈值。
+- 摄像头设备选择（含 iPhone 连续互通相机）、热插拔刷新。
+- Upper Body / Full Body 两种采集模式，入镜完整性实时判断。
+- 骨架 / 网格 / 解剖标注开关、FPS / 推理耗时 HUD。
+- GPU / CPU delegate 自动回退。
 
 ---
 
 ## 3. 隐私与离线
 
-- **不保存原始视频**（Phase 1 完全没有录制与 IndexedDB 写入）。
-- **不上传视频**；摄像头帧只进入本地 `<video>` 与 WASM 推理。
-- WASM 与模型都在 `public/` 内：
-  - `public/wasm/*.wasm`, `public/wasm/*.js`
-  - `public/models/pose_landmarker_lite.task`（5.5 MB）
-- 页面 CSP 设置 `connect-src 'self' ws://127.0.0.1:* ws://localhost:*`，阻断第三方连接，包括 MediaPipe npm 包内置的 Google 遥测端点。
-- 自动化测试确认：运行期间外部资源请求数为 0，向 `odml.pa.googleapis.com` 的请求被 CSP 阻断。
-- 断网演示：保持 `npm run dev` 运行，断开 Wi‑Fi 后刷新页面即可（所有运行资产来自本地）。
-
-### 模型来源
-
-- MediaPipe Pose Landmarker Lite 官方模型：
-  <https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task>
-- SHA-256：
-  `59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a`
-- MediaPipe Tasks Vision 为 Apache-2.0 许可。模型与 WASM 仅随项目本地加载，无运行时 CDN 依赖。
+- **不保存原始视频**，不上传视频，摄像头帧只进入本地 `<video>` 与 WASM 推理。
+- WASM 与模型都在 `public/` 内（`public/wasm/`、`public/models/pose_landmarker_lite.task`）。
+- CSP 设置 `connect-src 'self' ws://127.0.0.1:* ws://localhost:*`，阻断第三方连接。
+- 断网演示：保持 `npm run dev`，断开 Wi-Fi 后刷新页面即可。
 
 ---
 
-## 4. 工程启发式阈值
-
-| 参数 | 当前值 | 用途 |
-|---|---:|---|
-| `landmarkVisible` | 0.35 | 骨架绘制 / 点位可见性 |
-| `keyJointVisible` | 0.50 | 8 个关键关节计数 |
-| `minVisibleKeyJoints` | 5 / 8 | 实时“部分遮挡”提示 |
-| `lostPoseGraceMs` | 600 ms | 避免瞬时丢失造成闪烁告警 |
-| `uiUpdateIntervalMs` | 250 ms | React 指标采样节流 |
-| `fpsWarmupMs` | 500 ms | 避免 FPS 启动瞬间抖动 |
-
-**这些不是经过临床验证的标准，仅用于交互演示与测量质量控制原型。** 二维图像平面角度也不能直接解释为真实脊柱节段活动度；Phase 1 尚不计算角度或医学评分。
-
----
-
-## 5. 项目结构
+## 4. 项目结构
 
 ```text
 .
-├── start.command                  # macOS 一键启动（优先使用 .tools/node）
-├── index.html                     # CSP、favicon、应用入口
-├── package.json
-├── vite.config.ts
-├── vitest.config.ts
-├── tsconfig*.json
-├── scripts/
-│   └── sync-mediapipe-assets.mjs  # 从 node_modules 复制 WASM 到 public/
-├── public/
-│   ├── favicon.svg
-│   ├── models/
-│   │   └── pose_landmarker_lite.task
-│   └── wasm/                      # 6 个本地 MediaPipe 运行时文件
+├── start.command
+├── index.html
+├── package.json / vite.config.ts / vitest.config.ts / tsconfig*.json
+├── scripts/sync-mediapipe-assets.mjs
+├── public/{favicon.svg, models/, wasm/}
 ├── src/
-│   ├── App.tsx                    # 哈希路由与全局外壳
+│   ├── App.tsx                 # 哈希路由与全局外壳
 │   ├── main.tsx
-│   ├── config/constants.ts        # 模型参数、关键点、连接、阈值
+│   ├── config/constants.ts     # 模型参数、关键点、连接、阈值、中文标签
 │   ├── pages/
 │   │   ├── DashboardPage.tsx
-│   │   └── CapturePage.tsx
+│   │   ├── CapturePage.tsx
+│   │   ├── MotionGhostPage.tsx
+│   │   └── MotionArenaPage.tsx
 │   ├── components/
-│   │   ├── capture/CameraStage.tsx
-│   │   ├── capture/ControlPanel.tsx
-│   │   ├── capture/KeypointPanel.tsx
-│   │   ├── BrandMark.tsx
-│   │   ├── Icons.tsx
-│   │   └── MotionFigure.tsx
-│   ├── hooks/usePoseCapture.ts    # 摄像头 / 模型 / 推理 / 生命周期
+│   │   ├── arena/              # VisualComparison / DifferencePanel / DiagnosticsPanel / ArenaIcons
+│   │   ├── capture/            # CameraStage / ControlPanel / KeypointPanel
+│   │   ├── ghost/              # GhostCameraPanel / GhostPlaybackPanel / GhostRecordPanel / GhostReferencePanel
+│   │   └── ...
+│   ├── hooks/
+│   │   ├── usePoseCapture.ts
+│   │   ├── useGhostPlayback.ts
+│   │   ├── useArenaSession.ts
+│   │   └── useComparisonPlayback.ts
 │   ├── lib/
-│   │   ├── camera.ts              # 摄像头错误映射与轨道释放
-│   │   ├── metrics.ts             # FPS 滚动窗口 / EMA
-│   │   ├── pose.ts                # 坐标映射、可见性、Canvas 骨架
-│   │   ├── poseLandmarker.ts      # 本地 WASM + Lite 模型加载
-│   │   ├── time.ts                # 单调时间戳
-│   │   └── *.test.ts
+│   │   ├── camera.ts / metrics.ts / pose.ts / poseLandmarker.ts / time.ts
+│   │   ├── ghost/              # 录制 / 回放 / 渲染 / 库 / 变换
+│   │   └── arena/              # 兼容性 / 归一化 / DTW / 差异 / 评分 / 回放引擎 / 导出
 │   ├── styles/global.css
-│   └── types/pose.ts
-└── PHASE1_REPORT.md               # 本轮验收记录
+│   └── types/{pose,ghost,arena}.ts
+└── README.md
 ```
 
 ### 坐标与时间戳约定
 
 - MediaPipe 输出归一化坐标 `(x, y) ∈ [0,1]`。
 - Canvas 像素坐标：`x_px = x * video.videoWidth`，`y_px = y * video.videoHeight`。
-- 会话时间戳：
-  `streamEpoch = performance.now() - video.currentTime * 1000`
-  `timestamp = nextMonotonicTimestamp(previous, streamEpoch + video.currentTime * 1000)`
-- 即使浏览器时钟回退或视频重启，传给 MediaPipe 的 VIDEO 时间戳也保持严格递增。
+- 会话时间戳：`streamEpoch = performance.now() - video.currentTime * 1000`，保证严格递增。
+- Motion Arena 归一化：髋部锚点 + 躯干 / 肩宽尺度，消除站位与镜头远近差异。
 
 ---
 
-## 6. 测试
+## 5. 测试
 
-### 已验证
-
-- `npm test`：**31 / 31 通过**（时间戳、FPS、EMA、姿态可见性、坐标映射、Full Body 完整性，以及 Upper / Full 模式核心组判定）。
+- `npm test`：**149 / 149 通过**（18 个测试文件，覆盖时间戳、FPS、姿态可见性、DTW、归一化、兼容性、差异、评分、系统验收、回放引擎）。
 - `npm run build`：TypeScript 与 Vite 生产构建通过。
-- 浏览器自动化（macOS 15.2 arm64，Chrome 155 headless，虚拟摄像头）：
-  - 1280×720 输入：GPU 11.9 FPS / 14.8–18.9 ms；Canvas 1280×720。
-  - 640×426 官方姿态测试图输入：GPU 11.8 FPS / 14.9 ms，检测到 8/8 关键关节，骨架实际绘制。
-  - 完整画面校验：`object-fit=contain`、`transform=none`、`scale=1`；视频 / 舞台 / Canvas 边界误差均为 0px。
-  - 设备选择：枚举到虚拟摄像头；停止后选择具体 `deviceId` 并重新启动成功。
-  - 原始画面下肢截断测试：Upper Body 为 `READY`（3/3 核心组）且无告警；切换 Full Body 后立即变为 `ADJUST`（4/5），提示缺少踝/足部；切回 Upper Body 恢复 `READY`。
-  - 模式骨架：Upper Body 只绘制上半身；Full Body 保留全身骨架。
-  - CPU delegate：11.9 FPS / 23.3 ms，8/8 关键关节。
-  - 暂停后视频轨道 `enabled=false`；恢复后 `enabled=true` 且帧数继续增长；停止后 `srcObject=null`、轨道 `readyState=ended`。
-  - 无外部资源请求；CSP 阻断 Google 遥测端点。
 
 ### 必须由你人工确认
 
-自动化测试不能替代真实摄像头与真人骨架的现场验收。请按 [PHASE1_REPORT.md](./PHASE1_REPORT.md) 的清单逐项确认。
+自动化测试不能替代真实摄像头与真人骨架的现场验收。请重点确认：
+
+1. Mac Chrome 开启摄像头 + iPhone 连续互通相机切换。
+2. Upper / Full Body 模式入镜判断与骨架显示。
+3. Motion Arena 完整流程（A → B → 评分 → 回放 → 再来一局）。
+4. 质量不合格时拒绝评分并给出中文原因。
+5. 双骨架回放、解剖标注、差异关节高亮、差异时段跳转。
+6. 页面刷新、路由切换、录制中途退出、摄像头权限拒绝与恢复。
+7. 持续运行的内存占用。
 
 ---
 
-## 7. 已知限制（Phase 1）
+## 6. 已知限制
 
 - 只支持单人；多人入镜可能造成关键点跳变。
 - 仅使用图像平面二维投影，不计算真实三维脊柱运动或临床角度。
-- 尚未实现动作录制、回放、DTW、评分、质量分级与导出（Phase 2–5）。
-- 极暗环境、宽松衣物、严重遮挡、半身出镜会降低可见性；UI 会提示但不阻止采集。
-- 页面已确认不做裁切。若完整原始画面中仍缺头或脚，属于摄像头物理视野、站位距离或系统相机效果（如 Center Stage / 人像模式）限制，应用无法通过 CSS 增加原始视频未拍到的像素。
-- 真实 GPU 性能取决于 Chrome 版本、macOS、摄像头分辨率与后台负载；10–15 FPS 为目标而非保证。
-- 开发服务器 `npm run dev` 仍依赖本机 Node 进程；生产构建可用任意静态服务器托管。
+- 极暗环境、宽松衣物、严重遮挡、半身出镜会降低可见性。
+- 真实 GPU 性能取决于 Chrome 版本、macOS、摄像头分辨率与后台负载。
 
 ---
 
-## 8. 常见问题
+## 7. 常见问题
 
-**摄像头没有画面 / 权限被拒绝**
+**摄像头没有画面 / 权限被拒绝** — Chrome 地址栏左侧 → 网站设置 → 摄像头 → 允许；macOS 系统设置 → 隐私 → 摄像头 → 允许 Chrome。
 
-1. Chrome 地址栏左侧 → 网站设置 → 摄像头 → 允许。
-2. macOS：系统设置 → 隐私与安全性 → 摄像头 → 允许 Google Chrome。
-3. 刷新页面并重试。
+**看不到 iPhone 连续互通相机** — iPhone 解锁、靠近 Mac、同 Apple ID、开 Wi-Fi / 蓝牙；首次授权后点“刷新设备”。
 
-**看不到 iPhone 连续互通相机**
+**提示设备被占用** — 退出 Zoom / Teams / QuickTime 等应用后重新启动摄像头。
 
-1. iPhone 解锁、靠近 Mac、与 Mac 登录同一 Apple ID，并开启 Wi‑Fi / 蓝牙。
-2. 在 Chrome 中先允许一次摄像头权限，然后点击设备列表旁的“刷新设备”。
-3. 如 Chrome 菜单中未启用连续互通，检查 macOS 的相机 / 连续互通设置；必要时重启 Chrome。
+**GPU 初始化失败** — 保持“自动”回退 CPU，或手动选择 CPU。
 
-**设备名称显示为“视频设备 1”**
+**端口 5173 被占用** — 停止占用进程或已运行窗口后重新双击 `start.command`。
 
-Chrome 在首次授权前会隐藏设备名称。启动一次摄像头后点击“刷新设备”，名称即可显示。
-
-**提示设备被占用**
-
-退出 Zoom / Teams / QuickTime / 相机等应用，再点击“重新启动摄像头”。
-
-**GPU 初始化失败**
-
-保持“自动”会回退 CPU；也可先停止，选择 CPU，再启动。
-
-**端口 5173 被占用**
-
-项目设置为固定端口。停止占用该端口的进程，或关闭已运行的 SpineMotion 窗口后重新双击 `start.command`。
-
-**模型缺失**
-
-确认 `public/models/pose_landmarker_lite.task` 与 `public/wasm/` 存在；运行 `npm run sync:assets` 后重启。
-
----
-
-## 9. 下一阶段（Phase 2 — Motion Ghost）
-
-待 Phase 1 人工确认后开始：
-
-- 5–10 秒姿态帧录制：`timestamp / landmarks / visibility`。
-- 本地 JSON 保存与重新载入。
-- 骨架回放、倍速、进度控制。
-- 第二次启动摄像头时叠加半透明参考幽灵骨架。
-- 保持默认不保存原始视频，并补充录制内存上限与隐私说明。
-
-Phase 2 开始前不会提前生成后续模块代码。
+**模型缺失** — 确认 `public/models/` 与 `public/wasm/` 存在，运行 `npm run sync:assets` 后重启。
