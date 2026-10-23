@@ -7,6 +7,7 @@ import {
   CameraIcon,
   CpuIcon,
   InfoIcon,
+  ScanIcon,
   ShieldIcon,
 } from "../components/Icons";
 import { CAPTURE_CONFIG, ENGINEERING_NOTE } from "../config/constants";
@@ -81,7 +82,20 @@ export function CapturePage() {
                   <CameraIcon />
                   <div>
                     <strong>采集</strong>
-                    <span>首选取 1280×720 / 30fps，浏览器可返回设备实际支持的分辨率。</span>
+                    <span>
+                      首选取 1280×720 / 30fps；预览固定为完整原始画面（contain），
+                      不放大、不裁切。
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <ScanIcon />
+                  <div>
+                    <strong>视野</strong>
+                    <span>
+                      完整画面模式下若仍缺少头部或下肢，提示为摄像头物理视角或站位问题；
+                      应用不会用数字缩放伪造视野。
+                    </span>
                   </div>
                 </li>
                 <li>
@@ -167,7 +181,10 @@ export function CapturePage() {
               </li>
               <li>
                 <strong>骨架抖动或丢失</strong>
-                <span>改善正面光照，避免宽松衣物；确保全身完整入镜且只有一人。</span>
+                <span>
+                  改善正面光照，避免宽松衣物；确保只有一人。若完整画面仍缺下肢，
+                  请后退或关闭 Center Stage / 人像模式。
+                </span>
               </li>
             </ol>
           </section>

@@ -3,6 +3,7 @@ export type ActiveDelegate = "GPU" | "CPU";
 export type CapturePhase = "idle" | "starting" | "running" | "paused" | "error";
 export type ModelStatus = "idle" | "loading" | "ready" | "error";
 export type PoseSignal = "none" | "ok" | "partial" | "lost";
+export type FramingState = "unknown" | "full" | "upper-cut" | "lower-cut";
 
 export interface PosePoint {
   x: number;
@@ -30,6 +31,7 @@ export interface LivePoseState {
   visibilityAverage: number;
   landmarks: PosePoint[] | null;
   lostForMs: number;
+  framing: FramingState;
 }
 
 export interface DelegateInfo {

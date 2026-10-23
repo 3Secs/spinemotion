@@ -53,8 +53,10 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 
 - 使用 `getUserMedia` 请求摄像头，首选 `1280×720 / 30fps`；浏览器可返回设备实际支持的尺寸。
 - 使用 `HTMLVideoElement` 显示原始画面，`Canvas 2D` 作为透明覆盖层。
-- Canvas 内部尺寸严格等于 `video.videoWidth × video.videoHeight`；舞台宽高比同步源画面，归一化坐标乘以源像素尺寸绘制，因此无需猜测画面缩放。
-- 画面**不镜像**，方便核对坐标；界面上明确标注 `NOT MIRRORED`。
+- 预览固定为 **完整原始画面模式**：`object-fit: contain`，`transform: none`、`scale: 1`，不使用 `cover`、数字放大、镜像或窗口裁切。舞台宽高比同步源画面。
+- Canvas 内部尺寸严格等于 `video.videoWidth × video.videoHeight`；Canvas 显示区域与视频、舞台完全重合，归一化坐标乘以源像素尺寸绘制，骨架映射 1:1。
+- 画面**不镜像**，方便核对坐标；界面上明确标注 `NOT MIRRORED`、`CONTAIN` 和源宽高比。
+- 基于关键点进行上肢 / 下肢完整性判断。若完整画面模式下仍缺少头部或下肢，UI 会明确提示这是**摄像头物理视野或站位距离问题，不是页面裁切**，并建议后退、调整俯仰角或关闭 Center Stage / 人像模式。
 - 支持骨架开关、校准网格开关、对应工具提示与状态 HUD。
 
 ### 姿态推理
@@ -179,11 +181,13 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 
 ### 已验证
 
-- `npm test`：**22 / 22 通过**（时间戳单调性、媒体时间映射、FPS 滚动窗口、EMA、姿态可见性、关键点分类、坐标映射）。
+- `npm test`：**26 / 26 通过**（时间戳单调性、媒体时间映射、FPS 滚动窗口、EMA、姿态可见性、关键点分类、坐标映射、全景/上下肢缺失判断）。
 - `npm run build`：TypeScript 与 Vite 生产构建通过。
 - 浏览器自动化（macOS 15.2 arm64，Chrome 155 headless，虚拟摄像头）：
   - 1280×720 输入：GPU 11.9 FPS / 14.8–18.9 ms；Canvas 1280×720。
   - 640×426 官方姿态测试图输入：GPU 11.8 FPS / 14.9 ms，检测到 8/8 关键关节，骨架实际绘制。
+  - 完整画面校验：`object-fit=contain`、`transform=none`、`scale=1`；视频 / 舞台 / Canvas 边界误差均为 0px，Canvas 与舞台宽高比均为 1.502。
+  - 原始画面下肢截断测试：正常显示 6/8 关键关节，并出现“未稳定检测到完整下肢”物理视野提示。
   - CPU delegate：11.9 FPS / 23.3 ms，8/8 关键关节。
   - 暂停后视频轨道 `enabled=false`；恢复后 `enabled=true` 且帧数继续增长；停止后 `srcObject=null`、轨道 `readyState=ended`。
   - 无外部资源请求；CSP 阻断 Google 遥测端点。
@@ -200,6 +204,7 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 - 仅使用图像平面二维投影，不计算真实三维脊柱运动或临床角度。
 - 尚未实现动作录制、回放、DTW、评分、质量分级与导出（Phase 2–5）。
 - 极暗环境、宽松衣物、严重遮挡、半身出镜会降低可见性；UI 会提示但不阻止采集。
+- 页面已确认不做裁切。若完整原始画面中仍缺头或脚，属于摄像头物理视野、站位距离或系统相机效果（如 Center Stage / 人像模式）限制，应用无法通过 CSS 增加原始视频未拍到的像素。
 - 真实 GPU 性能取决于 Chrome 版本、macOS、摄像头分辨率与后台负载；10–15 FPS 为目标而非保证。
 - 开发服务器 `npm run dev` 仍依赖本机 Node 进程；生产构建可用任意静态服务器托管。
 

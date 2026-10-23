@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { KEY_JOINT_INDICES, QUALITY_THRESHOLDS } from "../config/constants";
 import type { PosePoint } from "../types/pose";
 import {
+  assessFraming,
   averageVisibility,
   classifyPoseSignal,
   countVisibleKeyJoints,
@@ -55,6 +56,33 @@ describe("pose conversion and visibility", () => {
     landmarks[0].visibility = 0;
     expect(averageVisibility(landmarks)).toBeCloseTo((32 * 0.8) / 33, 6);
     expect(averageVisibility(null)).toBe(0);
+  });
+});
+
+describe("assessFraming", () => {
+  it("reports a full frame when head, shoulders, knees and ankles are visible", () => {
+    expect(assessFraming(makeLandmarks(0.9))).toBe("full");
+  });
+
+  it("detects lower-body cut-off in the original camera stream", () => {
+    const landmarks = makeLandmarks(0.9);
+    for (const index of [25, 26, 27, 28]) {
+      landmarks[index].visibility = 0.1;
+    }
+    expect(assessFraming(landmarks)).toBe("lower-cut");
+  });
+
+  it("detects upper-body cut-off in the original camera stream", () => {
+    const landmarks = makeLandmarks(0.9);
+    for (const index of [0, 7, 8, 11, 12]) {
+      landmarks[index].visibility = 0;
+    }
+    expect(assessFraming(landmarks)).toBe("upper-cut");
+  });
+
+  it("returns unknown without a complete pose", () => {
+    expect(assessFraming(null)).toBe("unknown");
+    expect(assessFraming(makeLandmarks(0.9).slice(0, 20))).toBe("unknown");
   });
 });
 

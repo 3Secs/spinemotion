@@ -4,6 +4,7 @@ import {
   CrosshairIcon,
   PauseIcon,
   PlayIcon,
+  ScanIcon,
   StopIcon,
   WarningIcon,
 } from "../Icons";
@@ -69,19 +70,48 @@ export function CameraStage({
       ? `${videoSize.width} × ${videoSize.height}`
       : "等待画面";
   const aspect = videoSize.width > 0 ? `${videoSize.width} / ${videoSize.height}` : "16 / 9";
+  const sourceAspect =
+    videoSize.width > 0 && videoSize.height > 0
+      ? `${(videoSize.width / videoSize.height).toFixed(2)} : 1`
+      : "—";
 
-  const warning =
-    phase === "running" && live.signal === "lost"
-      ? { tone: "danger", title: "未检测到人体", detail: "请调整站位，让头、肩、髋与双踝完整进入画面。" }
-      : phase === "running" && live.signal === "partial"
-        ? {
-            tone: "warn",
-            title: "关键关节可见性不足",
-            detail: `仅 ${live.visibleKeyJoints}/8 个关键关节可见。避免宽松衣物或肢体互相遮挡。`,
-          }
-        : phase === "running" && live.signal === "none"
-          ? { tone: "neutral", title: "正在识别姿态…", detail: "保持全身静止片刻，等待关键点稳定。" }
-          : null;
+  let warning: { tone: "danger" | "warn" | "neutral"; title: string; detail: string } | null = null;
+  if (phase === "running") {
+    if (live.signal === "lost") {
+      warning = {
+        tone: "danger",
+        title: "未检测到人体",
+        detail:
+          "请让头、肩、髋与双踝进入镜头。若画面中已有上半身，请后退或调整摄像头角度；当前为完整原始画面，页面没有裁切。",
+      };
+    } else if (live.framing === "lower-cut") {
+      warning = {
+        tone: "warn",
+        title: "未稳定检测到完整下肢",
+        detail:
+          "完整原始画面未裁切。可能原因：摄像头物理视野、站位距离，或下肢遮挡/可见性过低。若画面底部已截断脚踝，请后退 1–2 米、调整俯仰角或关闭 Center Stage / 人像模式。",
+      };
+    } else if (live.framing === "upper-cut") {
+      warning = {
+        tone: "warn",
+        title: "未稳定检测到头部或肩部",
+        detail:
+          "完整原始画面未裁切。可能原因：摄像头物理视野、镜头高度，或上半身遮挡/可见性过低。若画面顶部已截断头部，请调整摄像头高度或俯仰角。",
+      };
+    } else if (live.signal === "partial") {
+      warning = {
+        tone: "warn",
+        title: "关键关节可见性不足",
+        detail: `仅 ${live.visibleKeyJoints}/8 个关键关节可见。避免宽松衣物或肢体互相遮挡。`,
+      };
+    } else if (live.signal === "none") {
+      warning = {
+        tone: "neutral",
+        title: "正在识别姿态…",
+        detail: "保持全身静止片刻，等待关键点稳定。",
+      };
+    }
+  }
 
   return (
     <section className="camera-card" aria-label="摄像头实时画面">
@@ -93,6 +123,12 @@ export function CameraStage({
           <span className="mono-muted">CAM_01 / SINGLE TARGET</span>
         </div>
         <div className="stage-toggles">
+          <span
+            className="frame-mode-chip"
+            title="object-fit: contain，完整显示原始摄像头画面；不做数字缩放或裁切"
+          >
+            完整画面 · CONTAIN
+          </span>
           <button
             className={`toggle ${showSkeleton ? "is-on" : ""}`}
             onClick={onToggleSkeleton}
@@ -117,7 +153,7 @@ export function CameraStage({
           autoPlay
           muted
           playsInline
-          aria-label="本地摄像头实时画面（未镜像）"
+          aria-label="本地摄像头完整原始画面（contain、未镜像、未裁切）"
         />
         <canvas ref={canvasRef} className="pose-overlay" aria-hidden="true" />
 
@@ -255,7 +291,19 @@ export function CameraStage({
           </strong>
         </span>
         <span className="meta-grow" />
-        <span>坐标按源分辨率归一化映射 · 单目标</span>
+        <span>坐标按源分辨率 1:1 映射 · 单目标</span>
+      </div>
+
+      <div className="full-frame-contract">
+        <span className="full-frame-icon"><ScanIcon /></span>
+        <div>
+          <strong>完整原始画面模式</strong>
+          <span>
+            object-fit: contain · 无数字放大 / 裁切 · 骨架映射 1:1。
+            若此模式下仍看不到全身，属于摄像头物理视野或站位距离限制，不是页面裁切。
+          </span>
+        </div>
+        <span className="full-frame-aspect">源宽高比 {sourceAspect}</span>
       </div>
     </section>
   );

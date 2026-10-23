@@ -1169,8 +1169,24 @@ select:focus-visible {
 
 .stage-toggles {
   display: flex;
+  align-items: center;
   gap: 6px;
   flex: 0 0 auto;
+}
+
+.frame-mode-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(85, 230, 216, 0.2);
+  border-radius: 7px;
+  color: var(--accent);
+  background: rgba(85, 230, 216, 0.07);
+  font-family: var(--mono);
+  font-size: 0.53rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .toggle {
@@ -1233,12 +1249,19 @@ select:focus-visible {
 .camera-video {
   z-index: 1;
   background: #02050a;
-  object-fit: fill;
+  /* Full original camera frame. The stage aspect follows the source dimensions,
+     so contain never introduces bars here — but it guarantees no CSS crop. */
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+  scale: 1;
 }
 
 .pose-overlay {
   z-index: 2;
   pointer-events: none;
+  transform: none;
+  scale: 1;
 }
 
 .stage-overlay {
@@ -1654,6 +1677,56 @@ select:focus-visible {
 
 .meta-grow {
   flex: 1;
+}
+
+.full-frame-contract {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--border);
+  background: rgba(7, 15, 25, 0.74);
+}
+
+.full-frame-icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.full-frame-icon svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+.full-frame-contract > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.full-frame-contract strong {
+  color: var(--text-soft);
+  font-size: 0.67rem;
+  font-weight: 570;
+}
+
+.full-frame-contract div span {
+  color: var(--muted);
+  font-size: 0.59rem;
+  line-height: 1.55;
+}
+
+.full-frame-aspect {
+  margin-left: auto;
+  padding: 4px 7px;
+  border: 1px solid rgba(126, 163, 203, 0.13);
+  border-radius: 5px;
+  color: var(--muted-dim);
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  white-space: nowrap;
 }
 
 /* Control panel */
@@ -2378,6 +2451,18 @@ select:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .frame-mode-chip {
+    display: none;
+  }
+
+  .full-frame-contract {
+    flex-wrap: wrap;
+  }
+
+  .full-frame-aspect {
+    margin-left: 26px;
+  }
+
   .brand-text strong {
     font-size: 0.9rem;
   }

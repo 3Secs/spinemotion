@@ -4,7 +4,7 @@ import {
   POSE_CONNECTIONS,
   QUALITY_THRESHOLDS,
 } from "../config/constants";
-import type { PosePoint, PoseSignal } from "../types/pose";
+import type { FramingState, PosePoint, PoseSignal } from "../types/pose";
 
 interface NormalizedLandmarkLike {
   x: number;
@@ -59,6 +59,28 @@ export function toPixelCoordinate(
   height: number,
 ): { x: number; y: number } {
   return { x: point.x * width, y: point.y * height };
+}
+
+/**
+ * Heuristic check for whether the original camera stream contains the whole
+ * body. It deliberately answers a framing question, not a clinical one.
+ */
+export function assessFraming(
+  landmarks: readonly PosePoint[] | null,
+  threshold = QUALITY_THRESHOLDS.landmarkVisible,
+): FramingState {
+  if (!landmarks || landmarks.length < 33) return "unknown";
+  const visible = (index: number) =>
+    (landmarks[index]?.visibility ?? 0) >= threshold;
+
+  const upperVisible =
+    visible(0) || visible(7) || visible(8) || visible(11) || visible(12);
+  const kneeVisible = visible(25) || visible(26);
+  const ankleVisible = visible(27) || visible(28);
+
+  if (!upperVisible) return "upper-cut";
+  if (!kneeVisible || !ankleVisible) return "lower-cut";
+  return "full";
 }
 
 export function classifyPoseSignal(

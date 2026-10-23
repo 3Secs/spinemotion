@@ -10,7 +10,14 @@ import {
   stopMediaStream,
 } from "../lib/camera";
 import { Ema, FpsMeter } from "../lib/metrics";
-import { renderOverlay, toPosePoints, countVisibleKeyJoints, averageVisibility, classifyPoseSignal } from "../lib/pose";
+import {
+  assessFraming,
+  averageVisibility,
+  classifyPoseSignal,
+  countVisibleKeyJoints,
+  renderOverlay,
+  toPosePoints,
+} from "../lib/pose";
 import { createPoseEngine, type PoseEngine } from "../lib/poseLandmarker";
 import { nextMonotonicTimestamp } from "../lib/time";
 import type {
@@ -39,6 +46,7 @@ const EMPTY_LIVE: LivePoseState = {
   visibilityAverage: 0,
   landmarks: null,
   lostForMs: 0,
+  framing: "unknown",
 };
 
 const EMPTY_DELEGATE: DelegateInfo = { active: null, fallbackNote: null };
@@ -245,6 +253,7 @@ export function usePoseCapture({
       lostForMs: Number.isFinite(signalInfo.lostForMs)
         ? signalInfo.lostForMs
         : 0,
+      framing: assessFraming(landmarks),
     });
   }, []);
 
