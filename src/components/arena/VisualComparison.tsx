@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ArenaScore } from "../../types/arena";
 import type { GhostAction } from "../../types/ghost";
 import type { CaptureMode } from "../../types/pose";
 import { useComparisonPlayback } from "../../hooks/useComparisonPlayback";
@@ -10,7 +9,6 @@ interface Props {
   actionA: GhostAction | null;
   actionB: GhostAction | null;
   captureMode: CaptureMode;
-  score: ArenaScore | null;
 }
 
 const REF_COLOR = "rgba(84, 220, 255, 1)";

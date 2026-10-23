@@ -12,7 +12,9 @@ const MODE_KEY_JOINTS: Record<CaptureMode, readonly number[]> = {
 /** Minimum key joints that must be visible on a typical frame for each mode. */
 const MODE_MIN_KEY_JOINTS: Record<CaptureMode, number> = {
   "upper-body": 2,
-  "full-body": 4,
+  /** Full-body needs at least 5/8 so shoulders+hips alone (4) can't pass
+   *  without lower-body contribution. Transient knee/ankle occlusion is OK. */
+  "full-body": 5,
 };
 
 function countModeKeyJoints(frame: GhostFrame, mode: CaptureMode): number {

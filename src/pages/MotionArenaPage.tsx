@@ -20,6 +20,7 @@ import type { ArenaScore } from "../types/arena";
 import type { GhostAction } from "../types/ghost";
 import VisualComparison from "../components/arena/VisualComparison";
 import DifferencePanel from "../components/arena/DifferencePanel";
+import DiagnosticsPanel from "../components/arena/DiagnosticsPanel";
 import { useComparisonPlayback } from "../hooks/useComparisonPlayback";
 
 function formatMs(ms: number): string {
@@ -345,6 +346,21 @@ export function MotionArenaPage() {
               )}
             </div>
           </section>
+
+          {/* Diagnostics */}
+          <DiagnosticsPanel
+            actionA={actionA}
+            actionB={actionB}
+            score={score}
+            scoreMode={session.scoreMode}
+            captureMode={session.captureMode}
+            durationSec={session.durationSec}
+            recordingElapsedMs={session.recordingElapsedMs}
+            recordingFrameCount={session.recordingFrameCount}
+            recordingValidFrames={session.recordingValidFrames}
+            refusalReason={refusalReason}
+            refusalWarnings={refusalWarnings}
+          />
         </aside>
       </div>
     </div>
@@ -445,7 +461,7 @@ function ArenaResultPanel({
       )}
 
       {score && actionA && actionB && (
-        <VisualComparison actionA={actionA} actionB={actionB} captureMode={captureMode} score={score} />
+        <VisualComparison actionA={actionA} actionB={actionB} captureMode={captureMode} />
       )}
 
       {score && actionA && actionB && (

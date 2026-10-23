@@ -4352,6 +4352,79 @@ select:focus-visible {
   white-space: pre-line;
 }
 
-/* Hide the old static joint list in arena results (replaced by interactive panel) */
-.arena-joints { display: none; }
-.arena-explanation { display: none; }
+/* ── Diagnostics Panel ── */
+
+.diagnostics-panel {
+  border-top: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.diag-toggle {
+  font-size: 11px;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.diag-body {
+  font-size: 10px;
+  padding: 8px 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.diag-section {
+  margin-bottom: 8px;
+}
+
+.diag-section h5 {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin: 0 0 4px;
+}
+
+.diag-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.diag-table td {
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.diag-table td:first-child {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  width: 40%;
+}
+
+.diag-table td:last-child {
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  word-break: break-all;
+}
+
+.diag-na {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.diag-warn {
+  background: rgba(255, 169, 90, 0.1);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.diag-warn h5 { color: #ffa85a; }
+
+.diag-warn ul { margin: 2px 0 0 12px; padding: 0; }
+
+.diag-explain {
+  white-space: pre-line;
+  line-height: 1.4;
+  max-width: 220px;
+}
