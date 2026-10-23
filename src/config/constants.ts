@@ -99,6 +99,22 @@ export const CAPTURE_MODE_OPTIONS: readonly CaptureMode[] = [
 ];
 export const DEFAULT_CAPTURE_MODE: CaptureMode = "upper-body";
 
+export const GHOST_CONFIG = {
+  defaultDurationSec: 8,
+  minDurationSec: 5,
+  maxDurationSec: 15,
+  countdownSeconds: 3,
+  /** Do not linearly interpolate across inference gaps longer than this. */
+  maxInterpolationGapMs: 250,
+  /** Hold the nearest valid frame for at most this long, then show a gap. */
+  maxHoldMs: 400,
+  defaultOpacity: 0.55,
+  minOpacity: 0.15,
+  maxOpacity: 0.9,
+  maxLibraryActions: 8,
+  previewMaxWidth: 960,
+} as const;
+
 export const POSE_MODEL_PATH = "models/pose_landmarker_lite.task";
 export const MEDIAPIPE_WASM_PATH = "wasm";
 

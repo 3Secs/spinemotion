@@ -31,7 +31,9 @@ import type {
   DelegateMode,
   LivePoseState,
   ModelStatus,
+  PoseFrameSample,
   PosePoint,
+  SkeletonTheme,
   VideoSize,
 } from "../types/pose";
 
@@ -55,12 +57,15 @@ const EMPTY_LIVE: LivePoseState = {
 const EMPTY_DELEGATE: DelegateInfo = { active: null, fallbackNote: null };
 const EMPTY_VIDEO_SIZE: VideoSize = { width: 0, height: 0 };
 
+export type PoseFrameListener = (frame: PoseFrameSample) => void;
+
 interface UsePoseCaptureOptions {
   targetFps: number;
   delegateMode: DelegateMode;
   captureMode: CaptureMode;
   showSkeleton: boolean;
   showGrid: boolean;
+  skeletonTheme?: SkeletonTheme;
 }
 
 export function usePoseCapture({
@@ -69,6 +74,7 @@ export function usePoseCapture({
   captureMode,
   showSkeleton,
   showGrid,
+  skeletonTheme = "default",
 }: UsePoseCaptureOptions) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -104,8 +110,10 @@ export function usePoseCapture({
   const targetFpsRef = useRef(targetFps);
   const delegateModeRef = useRef(delegateMode);
   const captureModeRef = useRef(captureMode);
+  const skeletonThemeRef = useRef<SkeletonTheme>(skeletonTheme);
   const showSkeletonRef = useRef(showSkeleton);
   const showGridRef = useRef(showGrid);
+  const frameListenersRef = useRef(new Set<PoseFrameListener>());
   const fpsMeterRef = useRef(new FpsMeter(1500, QUALITY_THRESHOLDS.fpsWarmupMs));
   const latencyRef = useRef(new Ema(0.2));
 
@@ -186,6 +194,7 @@ export function usePoseCapture({
       showSkeleton: showSkeletonRef.current,
       showGrid: showGridRef.current,
       captureMode: captureModeRef.current,
+      theme: skeletonThemeRef.current,
     });
   }, []);
 
@@ -199,6 +208,18 @@ export function usePoseCapture({
     captureModeRef.current = captureMode;
     drawLatest();
   }, [captureMode, drawLatest]);
+
+  useEffect(() => {
+    skeletonThemeRef.current = skeletonTheme;
+    drawLatest();
+  }, [skeletonTheme, drawLatest]);
+
+  const subscribeToPoseFrames = useCallback((listener: PoseFrameListener) => {
+    frameListenersRef.current.add(listener);
+    return () => {
+      frameListenersRef.current.delete(listener);
+    };
+  }, []);
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -399,6 +420,28 @@ export function usePoseCapture({
 
       lastLandmarksRef.current = landmarks;
       if (landmarks) lastPoseAtRef.current = frameEnd;
+
+      if (frameListenersRef.current.size > 0) {
+        const sample: PoseFrameSample = {
+          timestampMs: timestamp,
+          sourceTimeSec,
+          landmarks,
+          captureMode: captureModeRef.current,
+          mirrored: false,
+          videoSize: {
+            width: video.videoWidth,
+            height: video.videoHeight,
+          },
+          inferenceMs: latency,
+        };
+        for (const listener of frameListenersRef.current) {
+          try {
+            listener(sample);
+          } catch (listenerError) {
+            console.error("[SpineMotion] pose frame listener failed", listenerError);
+          }
+        }
+      }
 
       if (activeRef.current && !pausedRef.current) {
         drawLatest();
@@ -654,6 +697,7 @@ export function usePoseCapture({
     devicesError,
     refreshDevices,
     selectDevice,
+    subscribeToPoseFrames,
     start,
     pause,
     resume,

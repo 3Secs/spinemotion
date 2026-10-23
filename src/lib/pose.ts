@@ -11,6 +11,7 @@ import type {
   FramingState,
   PosePoint,
   PoseSignal,
+  SkeletonTheme,
 } from "../types/pose";
 
 interface NormalizedLandmarkLike {
@@ -18,21 +19,27 @@ interface NormalizedLandmarkLike {
   y: number;
   z: number;
   visibility?: number;
+  presence?: number;
 }
 
 export interface OverlayOptions {
   showSkeleton: boolean;
   showGrid: boolean;
   captureMode: CaptureMode;
+  theme: SkeletonTheme;
 }
 
 export function toPosePoint(landmark: NormalizedLandmarkLike): PosePoint {
-  return {
+  const point: PosePoint = {
     x: landmark.x,
     y: landmark.y,
     z: landmark.z,
     visibility: landmark.visibility ?? 0,
   };
+  if (typeof landmark.presence === "number") {
+    point.presence = landmark.presence;
+  }
+  return point;
 }
 
 export function toPosePoints(
@@ -177,7 +184,14 @@ export function renderOverlay(
     drawCalibrationGrid(ctx, width, height);
   }
   if (options.showSkeleton && landmarks) {
-    drawSkeleton(ctx, landmarks, width, height, options.captureMode);
+    drawSkeleton(
+      ctx,
+      landmarks,
+      width,
+      height,
+      options.captureMode,
+      options.theme,
+    );
   }
 }
 
@@ -234,10 +248,21 @@ function drawSkeleton(
   width: number,
   height: number,
   captureMode: CaptureMode,
+  theme: SkeletonTheme,
 ): void {
   const unit = Math.max(0.75, width / 720);
   const threshold = QUALITY_THRESHOLDS.landmarkVisible;
   const upperBodyOnly = captureMode === "upper-body";
+  const amber = theme === "amber";
+  const traceColor = (group: keyof typeof CONNECTION_COLORS) =>
+    amber
+      ? group === "face"
+        ? "rgba(255, 196, 130, 0.55)"
+        : "#ff9d4d"
+      : CONNECTION_COLORS[group];
+  const pointFill = amber ? "#fff0dc" : "#8ef4e8";
+  const keyPointFill = amber ? "#fffaf2" : "#eafffb";
+  const glowColor = amber ? "#ff9d4d" : "#55e6d8";
 
   ctx.save();
   ctx.lineCap = "round";
@@ -267,13 +292,13 @@ function drawSkeleton(
     ctx.beginPath();
     ctx.moveTo(fromPixel.x, fromPixel.y);
     ctx.lineTo(toPixel.x, toPixel.y);
-    ctx.strokeStyle = CONNECTION_COLORS[connection.group];
+    ctx.strokeStyle = traceColor(connection.group);
     ctx.globalAlpha = Math.min(
       1,
       0.32 + Math.min(from.visibility, to.visibility) * 0.65,
     );
     ctx.lineWidth = (connection.group === "face" ? 2 : 4.6) * unit;
-    ctx.shadowColor = CONNECTION_COLORS[connection.group];
+    ctx.shadowColor = glowColor;
     ctx.shadowBlur = 9 * unit;
     ctx.stroke();
   }
@@ -298,8 +323,8 @@ function drawSkeleton(
 
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = isKeyJoint ? "#eafffb" : "#8ef4e8";
-    ctx.shadowColor = "#55e6d8";
+    ctx.fillStyle = isKeyJoint ? keyPointFill : pointFill;
+    ctx.shadowColor = glowColor;
     ctx.shadowBlur = 12 * unit;
     ctx.fill();
   }

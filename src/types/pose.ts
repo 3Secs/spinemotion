@@ -5,7 +5,7 @@ export type ModelStatus = "idle" | "loading" | "ready" | "error";
 export type PoseSignal = "none" | "ok" | "partial" | "lost";
 export type FramingState = "unknown" | "full" | "upper-cut" | "lower-cut";
 export type CaptureMode = "upper-body" | "full-body";
-
+export type SkeletonTheme = "default" | "amber";
 
 export interface CameraDevice {
   deviceId: string;
@@ -26,6 +26,19 @@ export interface PosePoint {
   y: number;
   z: number;
   visibility: number;
+  /** MediaPipe presence, when the model provides it. Never fabricated. */
+  presence?: number;
+}
+
+export interface PoseFrameSample {
+  /** Monotonic MediaPipe/session timestamp in milliseconds. */
+  timestampMs: number;
+  sourceTimeSec: number;
+  landmarks: PosePoint[] | null;
+  captureMode: CaptureMode;
+  mirrored: boolean;
+  videoSize: VideoSize;
+  inferenceMs: number;
 }
 
 export interface VideoSize {

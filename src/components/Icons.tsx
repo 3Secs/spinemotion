@@ -167,3 +167,85 @@ export function FlaskIcon(props: IconProps) {
     </IconBase>
   );
 }
+
+export function RecordIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="3.6" fill="currentColor" stroke="none" />
+    </IconBase>
+  );
+}
+
+export function GhostIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M6 10a6 6 0 0 1 12 0v9.2l-2.2-1.6-1.9 1.7-1.9-1.7-1.9 1.7-1.9-1.7L6 19.2V10Z" />
+      <path d="M9.5 10.5h.01M14.5 10.5h.01" />
+      <path d="M9.4 14c1.6 1 3.6 1 5.2 0" />
+    </IconBase>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 3v12M7 10l5 5 5-5M4 20h16" />
+    </IconBase>
+  );
+}
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+    </IconBase>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+      <path d="M10 11v5M14 11v5" />
+    </IconBase>
+  );
+}
+
+export function RotateIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 4v5h5" />
+      <path d="M5.2 9A8 8 0 1 1 4 14" />
+    </IconBase>
+  );
+}
+
+export function SaveIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M5 3h12l2 2v16H5V3Z" />
+      <path d="M8 3v6h8V3M8 21v-7h8v7" />
+    </IconBase>
+  );
+}
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </IconBase>
+  );
+}
+
+export function SlidersIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h.01" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="8" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </IconBase>
+  );
+}

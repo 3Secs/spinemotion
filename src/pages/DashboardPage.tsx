@@ -6,7 +6,7 @@ import {
   CheckIcon,
   CpuIcon,
   FlaskIcon,
-  LayersIcon,
+  GhostIcon,
   LockIcon,
   ScanIcon,
   ShieldIcon,
@@ -16,6 +16,7 @@ import {
 
 interface DashboardPageProps {
   onOpenCapture: () => void;
+  onOpenGhost: () => void;
 }
 
 const roadmap = [
@@ -32,8 +33,8 @@ const roadmap = [
     title: "Motion Ghost",
     subtitle: "动作数字分身",
     description: "关键点录制、时间戳、骨架回放、倍速与半透明幽灵参考。",
-    status: "planned",
-    icon: <LayersIcon />,
+    status: "available",
+    icon: <GhostIcon />,
   },
   {
     phase: "03",
@@ -69,7 +70,7 @@ const roadmap = [
   },
 ];
 
-export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
+export function DashboardPage({ onOpenCapture, onOpenGhost }: DashboardPageProps) {
   const scrollToRoadmap = () => {
     document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -80,7 +81,7 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="eyebrow-line" />
-            SPINEMOTION 2.0 · PHASE 1 ONLINE
+            SPINEMOTION 2.0 · PHASE 2 ONLINE
           </div>
           <h1>
             把人体动作，
@@ -97,11 +98,15 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
               启动实时捕捉
               <ArrowRightIcon className="btn-arrow" />
             </button>
+            <button className="btn btn-ghost btn-lg" onClick={onOpenGhost}>
+              <GhostIcon />
+              打开 Motion Ghost
+            </button>
             <button className="btn btn-ghost btn-lg" onClick={scrollToRoadmap}>
               查看开发路线
             </button>
           </div>
-          <div className="hero-tags" aria-label="Phase 1 能力标签">
+          <div className="hero-tags" aria-label="Phase 1–2 能力标签">
             <span><CpuIcon /> 本地 MediaPipe Lite</span>
             <span><ScanIcon /> 33 关键点 / 单目标</span>
             <span><ShieldIcon /> 视频不出本机</span>
@@ -113,7 +118,7 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
         </div>
       </section>
 
-      <section className="fact-strip" aria-label="Phase 1 关键参数">
+      <section className="fact-strip" aria-label="Phase 1–2 关键参数">
         <div className="fact">
           <span className="fact-value">33</span>
           <span className="fact-label">COCO 姿态关键点</span>
@@ -138,21 +143,28 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
             <span className="status-dot status-dot-live" />
             CURRENTLY AVAILABLE
           </div>
-          <h2>Phase 1 · 实时捕捉已接通</h2>
+          <h2>Phase 1–2 · 捕捉与动作分身已接通</h2>
           <p className="panel-lead">
-            当前版本只交付已经真实可用的捕捉引擎。开始后由 MediaPipe
-            在浏览器内完成单人姿态推理，Canvas 叠加骨架，并显示实际帧率与推理耗时。
+            Phase 1 提供实时单人姿态捕捉；Phase 2 增加关键点动作录制、真实时间轴回放、
+            本地 JSON 动作库，以及实时画面上的半透明 Ghost 骨架。
           </p>
           <ul className="check-list">
-            <li><CheckIcon /> 1280×720 首选采集，坐标按源分辨率映射</li>
-            <li><CheckIcon /> GPU 优先，兼容性不足时自动回退 CPU</li>
-            <li><CheckIcon /> 推理与屏幕刷新解耦，暂停 / 停止释放摄像头</li>
-            <li><CheckIcon /> 关键点丢失、摄像头拒绝授权、模型加载失败均有明确提示</li>
+            <li><CheckIcon /> 摄像头设备选择与 Upper / Full Body 两种模式</li>
+            <li><CheckIcon /> 5–15 秒动作录制、3 秒倒计时、有效帧质量统计</li>
+            <li><CheckIcon /> 真实时间戳回放、0.5× / 1× / 1.5× 与拖动定位</li>
+            <li><CheckIcon /> 青蓝参考 Ghost + 橙色实时骨架，自动身体对齐</li>
+            <li><CheckIcon /> 本地动作库、JSON 导入导出；不保存原始视频</li>
           </ul>
-          <button className="btn btn-primary" onClick={onOpenCapture}>
-            进入 Capture
-            <ArrowRightIcon className="btn-arrow" />
-          </button>
+          <div className="button-row">
+            <button className="btn btn-primary" onClick={onOpenGhost}>
+              <GhostIcon />
+              进入 Motion Ghost
+            </button>
+            <button className="btn btn-ghost" onClick={onOpenCapture}>
+              进入 Capture
+              <ArrowRightIcon className="btn-arrow" />
+            </button>
+          </div>
         </article>
 
         <aside className="panel trust-panel">
@@ -162,8 +174,8 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
           </div>
           <h2>默认不保存视频</h2>
           <p>
-            摄像头画面仅进入当前页面的视频元素和本地推理管线。Phase 1
-            不录制、不上传、不写入本地存储。
+            摄像头画面仅进入当前页面的视频元素和本地推理管线。Motion Ghost
+            仅把关键点序列写入本机动作库或下载 JSON，不保存、不上传原始视频。
           </p>
           <div className="trust-callout">
             <LockIcon />
@@ -234,7 +246,7 @@ export function DashboardPage({ onOpenCapture }: DashboardPageProps) {
 
       <footer className="site-footer">
         <span>SpineMotion 2.0 · Interactive &amp; Trustworthy Human Motion Lab</span>
-        <span>Phase 1 · Capture Engine · Local-first</span>
+        <span>Phase 1–2 · Capture + Motion Ghost · Local-first</span>
       </footer>
     </div>
   );

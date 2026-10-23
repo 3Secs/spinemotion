@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import {
   CameraIcon,
   CrosshairIcon,
@@ -23,6 +23,8 @@ import type {
 interface CameraStageProps {
   videoRef: RefObject<HTMLVideoElement | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  ghostCanvasRef?: RefObject<HTMLCanvasElement | null>;
+  systemOverlay?: ReactNode;
   phase: CapturePhase;
   modelStatus: ModelStatus;
   error: CaptureError | null;
@@ -52,6 +54,8 @@ function stageStatus(phase: CapturePhase): { label: string; tone: string } {
 export function CameraStage({
   videoRef,
   canvasRef,
+  ghostCanvasRef,
+  systemOverlay,
   phase,
   modelStatus,
   error,
@@ -166,6 +170,17 @@ export function CameraStage({
           aria-label="本地摄像头完整原始画面（contain、未镜像、未裁切）"
         />
         <canvas ref={canvasRef} className="pose-overlay" aria-hidden="true" />
+        {ghostCanvasRef && (
+          <canvas
+            ref={ghostCanvasRef}
+            className="ghost-overlay"
+            aria-hidden="true"
+          />
+        )}
+
+        {systemOverlay && (
+          <div className="stage-system-overlay">{systemOverlay}</div>
+        )}
 
         {phase === "idle" && (
           <div className="stage-overlay idle-overlay">
