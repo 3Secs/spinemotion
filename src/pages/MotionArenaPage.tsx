@@ -18,6 +18,9 @@ import { useArenaSession } from "../hooks/useArenaSession";
 import { assessCaptureReadiness } from "../lib/pose";
 import type { ArenaScore } from "../types/arena";
 import type { GhostAction } from "../types/ghost";
+import VisualComparison from "../components/arena/VisualComparison";
+import DifferencePanel from "../components/arena/DifferencePanel";
+import { useComparisonPlayback } from "../hooks/useComparisonPlayback";
 
 function formatMs(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "00:00.0";
@@ -162,6 +165,7 @@ export function MotionArenaPage() {
               refusalWarnings={refusalWarnings}
               actionA={actionA}
               actionB={actionB}
+              captureMode={session.captureMode}
               onReset={session.resetSession}
             />
           )}
@@ -353,6 +357,7 @@ function ArenaResultPanel({
   refusalWarnings,
   actionA,
   actionB,
+  captureMode,
   onReset,
 }: {
   score: ArenaScore | null;
@@ -360,9 +365,11 @@ function ArenaResultPanel({
   refusalWarnings: string[];
   actionA: GhostAction | null;
   actionB: GhostAction | null;
+  captureMode: "upper-body" | "full-body";
   onReset: () => void;
 }) {
   const scoringRefused = refusalReason && !score;
+  const pb = useComparisonPlayback(actionA, actionB);
 
   return (
     <section className="arena-results">
@@ -435,6 +442,22 @@ function ArenaResultPanel({
             ))}
           </div>
         </div>
+      )}
+
+      {score && actionA && actionB && (
+        <VisualComparison actionA={actionA} actionB={actionB} captureMode={captureMode} score={score} />
+      )}
+
+      {score && actionA && actionB && (
+        <DifferencePanel
+          score={score}
+          actionA={actionA}
+          actionB={actionB}
+          progress={pb.progress}
+          selectedJoint={pb.selectedJoint}
+          onSelectJoint={pb.setSelectedJoint}
+          onJumpMs={pb.jumpToMoment}
+        />
       )}
 
       {score && actionA && actionB && (
