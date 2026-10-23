@@ -24,11 +24,12 @@ function drawSkeletonToCtx(
   upperBody: boolean,
   highlight: readonly number[] = [],
   keyOnly = false,
+  showLabels = false,
 ) {
   ctx.clearRect(0, 0, width, height);
   if (!points) return;
   renderSkeleton(ctx, points, width, height, {
-    color, glowColor: glow, opacity, upperBodyOnly: upperBody, highlightIndices: highlight, keyJointsOnly: keyOnly,
+    color, glowColor: glow, opacity, upperBodyOnly: upperBody, highlightIndices: highlight, keyJointsOnly: keyOnly, showLabels,
   });
 }
 
@@ -38,6 +39,7 @@ export default function VisualComparison({ actionA, actionB, captureMode }: Prop
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const [view, setView] = useState<"side" | "overlay">("side");
   const [keyOnly, setKeyOnly] = useState(false);
+  const [showLabels, setShowLabels] = useState(false);
 
   const upperBody = captureMode === "upper-body";
   const pb = useComparisonPlayback(actionA, actionB);
@@ -54,11 +56,11 @@ export default function VisualComparison({ actionA, actionB, captureMode }: Prop
       const ic = imitCanvasRef.current;
       if (rc) {
         const ctx = rc.getContext("2d");
-        if (ctx) drawSkeletonToCtx(ctx, frame.refLandmarks, rc.width, rc.height, REF_COLOR, REF_GLOW, 1, upperBody, hl, keyOnly);
+        if (ctx) drawSkeletonToCtx(ctx, frame.refLandmarks, rc.width, rc.height, REF_COLOR, REF_GLOW, 1, upperBody, hl, keyOnly, showLabels);
       }
       if (ic) {
         const ctx = ic.getContext("2d");
-        if (ctx) drawSkeletonToCtx(ctx, frame.imitLandmarks, ic.width, ic.height, IMIT_COLOR, IMIT_GLOW, 1, upperBody, hl, keyOnly);
+        if (ctx) drawSkeletonToCtx(ctx, frame.imitLandmarks, ic.width, ic.height, IMIT_COLOR, IMIT_GLOW, 1, upperBody, hl, keyOnly, showLabels);
       }
     } else {
       const oc = overlayCanvasRef.current;
@@ -132,6 +134,9 @@ export default function VisualComparison({ actionA, actionB, captureMode }: Prop
           <button className={`btn btn-sm ${view === "overlay" ? "btn-primary" : "btn-ghost"}`} onClick={() => setView("overlay")}>重叠</button>
           <button className={`btn btn-sm ${keyOnly ? "btn-secondary" : "btn-ghost"}`} onClick={() => setKeyOnly(!keyOnly)}>
             {keyOnly ? "关键关节" : "完整骨架"}
+          </button>
+          <button className={`btn btn-sm ${showLabels ? "btn-secondary" : "btn-ghost"}`} onClick={() => setShowLabels(!showLabels)}>
+            解剖标注
           </button>
           <button className={`btn btn-sm ${pb.mode === "original" ? "btn-secondary" : "btn-ghost"}`} onClick={pb.toggleMode}>
             {pb.mode === "original" ? "原始时序" : "DTW"}

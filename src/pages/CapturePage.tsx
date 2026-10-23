@@ -32,6 +32,7 @@ export function CapturePage() {
     captureMode,
     showSkeleton,
     showGrid,
+    showLabels: false,
   });
   const readiness = useMemo(
     () => assessCaptureReadiness(capture.live.landmarks, captureMode),

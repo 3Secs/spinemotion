@@ -65,6 +65,7 @@ interface UsePoseCaptureOptions {
   captureMode: CaptureMode;
   showSkeleton: boolean;
   showGrid: boolean;
+  showLabels: boolean;
   skeletonTheme?: SkeletonTheme;
 }
 
@@ -74,6 +75,7 @@ export function usePoseCapture({
   captureMode,
   showSkeleton,
   showGrid,
+  showLabels,
   skeletonTheme = "default",
 }: UsePoseCaptureOptions) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -113,6 +115,7 @@ export function usePoseCapture({
   const skeletonThemeRef = useRef<SkeletonTheme>(skeletonTheme);
   const showSkeletonRef = useRef(showSkeleton);
   const showGridRef = useRef(showGrid);
+  const showLabelsRef = useRef(showLabels);
   const frameListenersRef = useRef(new Set<PoseFrameListener>());
   const fpsMeterRef = useRef(new FpsMeter(1500, QUALITY_THRESHOLDS.fpsWarmupMs));
   const latencyRef = useRef(new Ema(0.2));
@@ -193,6 +196,7 @@ export function usePoseCapture({
     renderOverlay(canvas, lastLandmarksRef.current, {
       showSkeleton: showSkeletonRef.current,
       showGrid: showGridRef.current,
+      showLabels: showLabelsRef.current,
       captureMode: captureModeRef.current,
       theme: skeletonThemeRef.current,
     });
@@ -201,8 +205,9 @@ export function usePoseCapture({
   useEffect(() => {
     showSkeletonRef.current = showSkeleton;
     showGridRef.current = showGrid;
+    showLabelsRef.current = showLabels;
     drawLatest();
-  }, [showSkeleton, showGrid, drawLatest]);
+  }, [showSkeleton, showGrid, showLabels, drawLatest]);
 
   useEffect(() => {
     captureModeRef.current = captureMode;

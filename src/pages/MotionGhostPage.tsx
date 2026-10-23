@@ -126,6 +126,7 @@ export function MotionGhostPage() {
     captureMode,
     showSkeleton,
     showGrid,
+    showLabels: false,
     skeletonTheme: "amber",
   });
   const readiness = useMemo(

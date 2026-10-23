@@ -57,6 +57,7 @@ export function useArenaSession() {
     captureMode,
     showSkeleton: true,
     showGrid: false,
+    showLabels: false,
     skeletonTheme: "amber",
   });
 

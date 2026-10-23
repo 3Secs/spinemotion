@@ -41,33 +41,33 @@ const roadmap = [
   {
     phase: "03",
     title: "Motion Arena",
-    subtitle: "动作复刻挑战",
-    description: "尺度归一化、DTW 时间对齐、可解释复刻评分与差异定位。",
+    subtitle: "双人动作竞技",
+    description: "尺度归一化、DTW 时间对齐、可解释评分、双骨架对比回放。",
     status: "available",
     icon: <SwordsIcon />,
   },
   {
     phase: "04",
     title: "MotionProof",
-    subtitle: "测量质量审核",
-    description: "完整入镜、遮挡、跳变、丢帧与可比性检查，拒绝无效评分。",
-    status: "planned",
+    subtitle: "质量反馈",
+    description: "入镜检查、遮挡提示、录制状态反馈 — 已整合至录制与结果页。",
+    status: "integrated",
     icon: <ShieldIcon />,
   },
   {
     phase: "05",
     title: "Motion Lab",
-    subtitle: "专业运动分析",
-    description: "关节角度曲线、轨迹对比、时序差异、热区与 JSON / CSV 导出。",
-    status: "planned",
+    subtitle: "动作分析报告",
+    description: "自然语言总结、关节差异排名、动作时段分析、JSON/CSV 导出。",
+    status: "integrated",
     icon: <FlaskIcon />,
   },
   {
     phase: "06",
     title: "Delivery",
     subtitle: "优化与交付",
-    description: "全站交互、性能复核、离线演示与完整研究文档。",
-    status: "planned",
+    description: "全站 UI 优化、性能复核、离线演示与完整文档。",
+    status: "available",
     icon: <CpuIcon />,
   },
 ];
@@ -83,33 +83,33 @@ export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: Dashb
         <div className="hero-copy">
           <div className="eyebrow">
             <span className="eyebrow-line" />
-            SPINEMOTION 2.0 · PHASE 2 ONLINE
+            SPINEMOTION 2.0 · PHASE 3 ONLINE
           </div>
           <h1>
-            把人体动作，
+            双人动作竞技，
             <br />
-            变成<span className="text-gradient">可验证</span>的数字证据。
+            谁的<span className="text-gradient">动作</span>更接近原版？
           </h1>
           <p className="hero-lead">
-            一个在浏览器本地运行的人体运动实验室。实时捕捉姿态，记录动作数字分身，
-            再用可解释的算法比较、分析与质控——不上传视频，不依赖云端 AI。
+            录制你的动作，与朋友一较高下。浏览器本地 AI 分析姿态，
+            用 DTW 对齐时间、找出差异关节 —— 不上传视频，不依赖云端。
           </p>
           <div className="hero-actions">
-            <button className="btn btn-primary btn-lg" onClick={onOpenCapture}>
-              <CameraIcon />
-              启动实时捕捉
+            <button className="btn btn-primary btn-lg" onClick={onOpenArena}>
+              <SwordsIcon />
+              开始挑战
               <ArrowRightIcon className="btn-arrow" />
+            </button>
+            <button className="btn btn-ghost btn-lg" onClick={onOpenCapture}>
+              <CameraIcon />
+              实时捕捉
             </button>
             <button className="btn btn-ghost btn-lg" onClick={onOpenGhost}>
               <GhostIcon />
-              打开 Motion Ghost
-            </button>
-            <button className="btn btn-ghost btn-lg" onClick={onOpenArena}>
-              <SwordsIcon />
-              Motion Arena
+              个人练习
             </button>
             <button className="btn btn-ghost btn-lg" onClick={scrollToRoadmap}>
-              查看开发路线
+              查看路线
             </button>
           </div>
           <div className="hero-tags" aria-label="Phase 1–2 能力标签">
@@ -147,12 +147,12 @@ export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: Dashb
         <article className="panel available-panel">
           <div className="panel-kicker">
             <span className="status-dot status-dot-live" />
-            CURRENTLY AVAILABLE
+            PHASE 1–3 COMPLETE · ARENA ONLINE
           </div>
-          <h2>Phase 1–2 · 捕捉与动作分身已接通</h2>
+          <h2>捕捉 · 录制 · 竞技</h2>
           <p className="panel-lead">
-            Phase 1 提供实时单人姿态捕捉；Phase 2 增加关键点动作录制、真实时间轴回放、
-            本地 JSON 动作库，以及实时画面上的半透明 Ghost 骨架。
+            Phase 1 实时捕捉 33 点人体骨架；Phase 2 录制动作数字分身；
+            Phase 3 双人竞技：DTW 对齐、关节差异排序、双骨架同步回放。
           </p>
           <ul className="check-list">
             <li><CheckIcon /> 摄像头设备选择与 Upper / Full Body 两种模式</li>
@@ -217,7 +217,7 @@ export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: Dashb
         <div className="roadmap-grid">
           {roadmap.map((item) => (
             <article
-              className={`roadmap-card ${item.status === "available" ? "is-available" : "is-planned"}`}
+              className={`roadmap-card ${item.status === "available" ? "is-available" : item.status === "integrated" ? "is-integrated" : "is-planned"}`}
               key={item.phase}
             >
               <div className="roadmap-top">
@@ -226,6 +226,8 @@ export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: Dashb
                 <span className={`roadmap-state ${item.status}`}>
                   {item.status === "available" ? (
                     <><span className="status-dot status-dot-live" /> 可用</>
+                  ) : item.status === "integrated" ? (
+                    <><CheckIcon /> 已整合</>
                   ) : (
                     <><LockIcon /> 计划中</>
                   )}
@@ -251,8 +253,8 @@ export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: Dashb
       </section>
 
       <footer className="site-footer">
-        <span>SpineMotion 2.0 · Interactive &amp; Trustworthy Human Motion Lab</span>
-        <span>Phase 1–2 · Capture + Motion Ghost · Local-first</span>
+        <span>SpineMotion 2.0 · Interactive Motion Lab · Phase 3</span>
+        <span>Capture + Ghost + Arena · Local-first</span>
       </footer>
     </div>
   );

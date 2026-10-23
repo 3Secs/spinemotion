@@ -2,6 +2,7 @@ import {
   CAPTURE_MODES,
   CONNECTION_COLORS,
   KEY_JOINT_INDICES,
+  LANDMARK_LABELS_ZH,
   POSE_CONNECTIONS,
   QUALITY_THRESHOLDS,
 } from "../config/constants";
@@ -25,6 +26,7 @@ interface NormalizedLandmarkLike {
 export interface OverlayOptions {
   showSkeleton: boolean;
   showGrid: boolean;
+  showLabels: boolean;
   captureMode: CaptureMode;
   theme: SkeletonTheme;
 }
@@ -191,6 +193,7 @@ export function renderOverlay(
       height,
       options.captureMode,
       options.theme,
+      options.showLabels,
     );
   }
 }
@@ -249,6 +252,7 @@ function drawSkeleton(
   height: number,
   captureMode: CaptureMode,
   theme: SkeletonTheme,
+  showLabels = false,
 ): void {
   const unit = Math.max(0.75, width / 720);
   const threshold = QUALITY_THRESHOLDS.landmarkVisible;
@@ -329,7 +333,47 @@ function drawSkeleton(
     ctx.fill();
   }
 
+  if (showLabels) {
+    drawLabels(ctx, landmarks, width, height, upperBodyOnly);
+  }
+
   ctx.restore();
+}
+
+function drawLabels(
+  ctx: CanvasRenderingContext2D,
+  landmarks: readonly PosePoint[],
+  width: number,
+  height: number,
+  upperBodyOnly: boolean,
+): void {
+  const unit = Math.max(0.75, width / 720);
+  const threshold = QUALITY_THRESHOLDS.landmarkVisible;
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.font = `${Math.max(9, 11 * unit)}px ui-sans-serif, system-ui, "PingFang SC", sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+
+  for (const index of KEY_JOINT_INDICES as readonly number[]) {
+    if (upperBodyOnly && index >= 25) continue;
+    const p = landmarks[index];
+    if (!p || p.visibility < threshold) continue;
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    const x = p.x * width;
+    const y = p.y * height;
+    const label = LANDMARK_LABELS_ZH[index];
+    if (!label) continue;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    const padX = 4 * unit;
+    const padY = 3 * unit;
+    const textW = ctx.measureText(label).width;
+    ctx.fillRect(x + padX, y - padY - 6 * unit, textW + 2 * padX, 12 * unit + 2 * padY);
+    ctx.fillStyle = "#55e6d8";
+    ctx.globalAlpha = 0.95;
+    ctx.fillText(label, x + padX + 2 * unit, y - padY);
+  }
 }
 
 function isFinitePoint(a: PosePoint, b: PosePoint): boolean {

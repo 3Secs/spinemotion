@@ -1,4 +1,4 @@
-import { POSE_CONNECTIONS, QUALITY_THRESHOLDS } from "../../config/constants";
+import { KEY_JOINT_INDICES, LANDMARK_LABELS_ZH, POSE_CONNECTIONS, QUALITY_THRESHOLDS } from "../../config/constants";
 
 export interface SkeletonRenderConfig {
   color: string;
@@ -9,6 +9,8 @@ export interface SkeletonRenderConfig {
   highlightIndices?: readonly number[];
   /** If true, draw only key joints (shoulders, hips, knees, ankles). */
   keyJointsOnly?: boolean;
+  /** If true, draw Chinese anatomical labels next to key joints. */
+  showLabels?: boolean;
 }
 
 interface DrawPoint {
@@ -88,10 +90,51 @@ export function renderSkeleton(
     ctx.fill();
   }
 
+  // Anatomical labels
+  if (config.showLabels) {
+    drawLabels(ctx, points, width, height, config);
+  }
+
   ctx.restore();
 }
 
 function isKeyJoint(index: number): boolean {
-  return index === 11 || index === 12 || index === 23 || index === 24 ||
-    index === 25 || index === 26 || index === 27 || index === 28;
+  return (KEY_JOINT_INDICES as readonly number[]).includes(index);
+}
+
+function drawLabels(
+  ctx: CanvasRenderingContext2D,
+  points: readonly (DrawPoint | null | undefined)[],
+  width: number,
+  height: number,
+  config: SkeletonRenderConfig,
+): void {
+  const unit = Math.max(0.75, width / 720);
+  const threshold = QUALITY_THRESHOLDS.landmarkVisible;
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.font = `${Math.max(9, 11 * unit)}px ui-sans-serif, system-ui, "PingFang SC", sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+
+  for (const index of KEY_JOINT_INDICES as readonly number[]) {
+    const p = points[index];
+    if (!p) continue;
+    if (p.visibility < threshold) continue;
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    const x = p.x * width;
+    const y = p.y * height;
+    const label = LANDMARK_LABELS_ZH[index];
+    if (!label) continue;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    const padX = 4 * unit;
+    const padY = 3 * unit;
+    const textW = ctx.measureText(label).width;
+    ctx.fillRect(x + padX, y - padY - 6 * unit, textW + 2 * padX, 12 * unit + 2 * padY);
+    ctx.fillStyle = config.color;
+    ctx.globalAlpha = config.opacity * 0.95;
+    ctx.fillText(label, x + padX + 2 * unit, y - padY);
+  }
+  ctx.globalAlpha = config.opacity;
 }

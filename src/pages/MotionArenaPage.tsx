@@ -22,6 +22,8 @@ import VisualComparison from "../components/arena/VisualComparison";
 import DifferencePanel from "../components/arena/DifferencePanel";
 import DiagnosticsPanel from "../components/arena/DiagnosticsPanel";
 import { useComparisonPlayback } from "../hooks/useComparisonPlayback";
+import { buildResultSummary } from "../lib/arena/summary";
+import { buildExportData, downloadArenaResult, downloadArenaResultCSV } from "../lib/arena/export";
 
 function formatMs(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return "00:00.0";
@@ -443,6 +445,13 @@ function ArenaResultPanel({
         </div>
       )}
 
+      {/* Natural-language summary */}
+      {score && actionA && actionB && (
+        <div className="arena-summary">
+          <p>{buildResultSummary(score, actionA, actionB)}</p>
+        </div>
+      )}
+
       {score && score.jointDifferences.length > 0 && (
         <div className="arena-joints">
           <h4>关节差异排名</h4>
@@ -494,9 +503,20 @@ function ArenaResultPanel({
       )}
 
       {score && (
-        <div className="arena-explanation">
-          <h4>评分说明</h4>
+        <details className="arena-explanation">
+          <summary>技术详情</summary>
           <p>{score.explanation}</p>
+        </details>
+      )}
+
+      {score && actionA && actionB && (
+        <div className="arena-exports">
+          <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResult(buildExportData(score, actionA, actionB))}>
+            📥 导出 JSON
+          </button>
+          <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResultCSV(buildExportData(score, actionA, actionB))}>
+            📊 导出 CSV
+          </button>
         </div>
       )}
 
