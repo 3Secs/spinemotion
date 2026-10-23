@@ -3,7 +3,7 @@ import { CAPTURE_CONFIG, DEFAULT_CAPTURE_MODE } from "../config/constants";
 import { checkArenaCompatibility } from "../lib/arena/compatibility";
 import { alignDtw } from "../lib/arena/dtw";
 import { prepareArenaPair } from "../lib/arena/normalize";
-import { computeArenaScore } from "../lib/arena/scoring";
+import { computeArenaScore, type ArenaScoreMode } from "../lib/arena/scoring";
 import { MotionRecorder } from "../lib/ghost/recorder";
 import { usePoseCapture } from "./usePoseCapture";
 import type { ArenaScore } from "../types/arena";
@@ -32,6 +32,7 @@ export function useArenaSession() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [recordingActive, setRecordingActive] = useState(false);
+  const [scoreMode, setScoreMode] = useState<ArenaScoreMode>("casual");
   const [score, setScore] = useState<ArenaScore | null>(null);
   const [refusalReason, setRefusalReason] = useState<string | null>(null);
   const [refusalWarnings, setRefusalWarnings] = useState<string[]>([]);
@@ -325,7 +326,7 @@ export function useArenaSession() {
 
       // Score
       try {
-        const result = computeArenaScore(pair);
+        const result = computeArenaScore(pair, scoreMode);
         setScore(result);
         if (!result.quality.acceptable) {
           setRefusalReason(result.quality.reasons.join("；"));
@@ -341,7 +342,7 @@ export function useArenaSession() {
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [step, actionA, actionB]);
+  }, [step, actionA, actionB, scoreMode]);
 
   return {
     step,
@@ -349,6 +350,7 @@ export function useArenaSession() {
     durationSec,
     actionA,
     actionB,
+    scoreMode,
     countdown,
     recordingElapsedMs,
     recordingFrameCount,
@@ -362,6 +364,7 @@ export function useArenaSession() {
     capture,
     setCaptureMode,
     setDurationSec,
+    setScoreMode,
     resetSession,
     startPlayerA: () => startCountdown("A"),
     startPlayerB: () => startCountdown("B"),

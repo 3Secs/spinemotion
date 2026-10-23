@@ -1,4 +1,5 @@
 import { QUALITY_THRESHOLDS } from "../../config/constants";
+import { LANDMARK_LABELS_ZH } from "../../config/constants";
 import type {
   DtwStep,
   JointDifference,
@@ -62,8 +63,8 @@ export function computeJointDifferences(
     .filter((idx) => counts[idx] > 0)
     .map((idx) => ({
       landmarkIndex: idx,
-      label: "",
-      labelZh: "",
+      label: `landmark-${idx}`,
+      labelZh: LANDMARK_LABELS_ZH[idx] ?? `关键点 ${idx}`,
       meanDistance: sums[idx] / counts[idx],
       maxDistance: maxes[idx],
       sampleCount: counts[idx],

@@ -188,6 +188,37 @@ export function MotionArenaPage() {
             onCaptureModeChange={session.setCaptureMode}
           />
 
+          {/* Score mode selector */}
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="panel-kicker"><TargetIcon /> SCORE MODE</span>
+                <h2>评分模式</h2>
+              </div>
+            </div>
+            <div className="mode-switch-row">
+              <button
+                className={`btn btn-sm ${session.scoreMode === "casual" ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => session.setScoreMode("casual")}
+                disabled={isResults || session.isRecording}
+              >
+                娱乐
+              </button>
+              <button
+                className={`btn btn-sm ${session.scoreMode === "research" ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => session.setScoreMode("research")}
+                disabled={isResults || session.isRecording}
+              >
+                分析
+              </button>
+            </div>
+            <p className="mode-hint">
+              {session.scoreMode === "casual"
+                ? "末端关节降权，分数更友好。"
+                : "原始测量指标，严格评分。"}
+            </p>
+          </section>
+
           {/* Duration selector */}
           <section className="panel">
             <div className="panel-heading">

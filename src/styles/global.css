@@ -4084,3 +4084,20 @@ select:focus-visible {
   .arena-layout { grid-template-columns: 1fr; }
   .arena-sidebar { max-height: none; border-left: none; border-top: 1px solid var(--border); }
 }
+
+.mode-switch-row {
+  display: flex;
+  gap: 6px;
+}
+
+.mode-switch-row .btn.btn-sm {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.mode-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
