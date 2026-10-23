@@ -11,7 +11,9 @@ import {
 import type {
   CaptureError,
   CaptureMetrics,
+  CaptureMode,
   CapturePhase,
+  CaptureReadiness,
   DelegateInfo,
   LivePoseState,
   ModelStatus,
@@ -28,6 +30,8 @@ interface CameraStageProps {
   live: LivePoseState;
   videoSize: VideoSize;
   delegateInfo: DelegateInfo;
+  captureMode: CaptureMode;
+  readiness: CaptureReadiness;
   showSkeleton: boolean;
   showGrid: boolean;
   onToggleSkeleton: () => void;
@@ -55,6 +59,8 @@ export function CameraStage({
   live,
   videoSize,
   delegateInfo,
+  captureMode,
+  readiness,
   showSkeleton,
   showGrid,
   onToggleSkeleton,
@@ -74,6 +80,11 @@ export function CameraStage({
     videoSize.width > 0 && videoSize.height > 0
       ? `${(videoSize.width / videoSize.height).toFixed(2)} : 1`
       : "—";
+  const modeLabel = captureMode === "upper-body" ? "UPPER BODY" : "FULL BODY";
+  const missingText =
+    readiness.missingLabels.length > 0
+      ? readiness.missingLabels.join("、")
+      : "关键关节";
 
   let warning: { tone: "danger" | "warn" | "neutral"; title: string; detail: string } | null = null;
   if (phase === "running") {
@@ -82,36 +93,35 @@ export function CameraStage({
         tone: "danger",
         title: "未检测到人体",
         detail:
-          "请让头、肩、髋与双踝进入镜头。若画面中已有上半身，请后退或调整摄像头角度；当前为完整原始画面，页面没有裁切。",
+          captureMode === "full-body"
+            ? "请后退并调整摄像头，让头部到脚踝完整入镜；当前为完整原始画面，页面没有裁切。"
+            : "请让头、肩、躯干与手臂进入镜头；当前为完整原始画面，页面没有裁切。",
       };
-    } else if (live.framing === "lower-cut") {
+    } else if (live.hasPose && !readiness.ready) {
       warning = {
         tone: "warn",
-        title: "未稳定检测到完整下肢",
+        title:
+          captureMode === "upper-body"
+            ? "Upper Body 采集条件未满足"
+            : "Full Body 采集条件未满足",
         detail:
-          "完整原始画面未裁切。可能原因：摄像头物理视野、站位距离，或下肢遮挡/可见性过低。若画面底部已截断脚踝，请后退 1–2 米、调整俯仰角或关闭 Center Stage / 人像模式。",
-      };
-    } else if (live.framing === "upper-cut") {
-      warning = {
-        tone: "warn",
-        title: "未稳定检测到头部或肩部",
-        detail:
-          "完整原始画面未裁切。可能原因：摄像头物理视野、镜头高度，或上半身遮挡/可见性过低。若画面顶部已截断头部，请调整摄像头高度或俯仰角。",
-      };
-    } else if (live.signal === "partial") {
-      warning = {
-        tone: "warn",
-        title: "关键关节可见性不足",
-        detail: `仅 ${live.visibleKeyJoints}/8 个关键关节可见。避免宽松衣物或肢体互相遮挡。`,
+          captureMode === "upper-body"
+            ? `缺少稳定可见：${missingText}。请让肩、肘、腕进入画面；本模式不要求下肢入镜，也不会改变摄像头视野。`
+            : `缺少稳定可见：${missingText}。请后退 1–2 米或调整摄像头俯仰角；完整原始画面未裁切，若仍无法满足请检查 Center Stage / 人像模式。`,
       };
     } else if (live.signal === "none") {
       warning = {
         tone: "neutral",
         title: "正在识别姿态…",
-        detail: "保持全身静止片刻，等待关键点稳定。",
+        detail: "保持身体稳定片刻，等待关键点稳定。",
       };
     }
   }
+  const readinessTone = !live.hasPose
+    ? "lost"
+    : readiness.ready
+      ? "ok"
+      : "partial";
 
   return (
     <section className="camera-card" aria-label="摄像头实时画面">
@@ -259,10 +269,12 @@ export function CameraStage({
               <span className="mono-muted">OVERLAY 1:1</span>
               <span className="hud-separator" />
               <span className="mono-muted">NOT MIRRORED</span>
+              <span className="hud-separator" />
+              <span className="mono-muted">{modeLabel}</span>
               <span className="hud-spacer" />
-              <span className={`pose-signal pose-signal-${live.signal}`}>
+              <span className={`pose-signal pose-signal-${readinessTone}`}>
                 {live.hasPose
-                  ? `${live.visibleKeyJoints}/8 KEY JOINTS`
+                  ? `${readiness.visibleGroups}/${readiness.totalGroups} GROUPS`
                   : "NO POSE"}
               </span>
             </div>
@@ -290,6 +302,9 @@ export function CameraStage({
             {videoSize.width > 0 ? `${videoSize.width} × ${videoSize.height}` : "—"}
           </strong>
         </span>
+        <span>
+          模式 <strong>{modeLabel}</strong>
+        </span>
         <span className="meta-grow" />
         <span>坐标按源分辨率 1:1 映射 · 单目标</span>
       </div>
@@ -297,10 +312,11 @@ export function CameraStage({
       <div className="full-frame-contract">
         <span className="full-frame-icon"><ScanIcon /></span>
         <div>
-          <strong>完整原始画面模式</strong>
+          <strong>完整原始画面 · 两种采集模式共用</strong>
           <span>
             object-fit: contain · 无数字放大 / 裁切 · 骨架映射 1:1。
-            若此模式下仍看不到全身，属于摄像头物理视野或站位距离限制，不是页面裁切。
+            采集模式只改变所需关键点与质控规则，不改变摄像头视野；若所需部位无法入镜，
+            属于摄像头物理视野或站位距离限制。
           </span>
         </div>
         <span className="full-frame-aspect">源宽高比 {sourceAspect}</span>

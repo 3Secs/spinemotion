@@ -52,12 +52,21 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 ### 摄像头与画面
 
 - 使用 `getUserMedia` 请求摄像头，首选 `1280×720 / 30fps`；浏览器可返回设备实际支持的尺寸。
+- **摄像头设备选择**：可枚举并选择 Mac 内置摄像头、iPhone 连续互通相机和 USB 摄像头；支持 `devicechange` 热插拔刷新。
+- 设备名称需首次授权后才会显示；采集中设备选择锁定，停止后可切换。所选设备启动时使用 `deviceId: { exact }`，不强制固定分辨率。
 - 使用 `HTMLVideoElement` 显示原始画面，`Canvas 2D` 作为透明覆盖层。
 - 预览固定为 **完整原始画面模式**：`object-fit: contain`，`transform: none`、`scale: 1`，不使用 `cover`、数字放大、镜像或窗口裁切。舞台宽高比同步源画面。
 - Canvas 内部尺寸严格等于 `video.videoWidth × video.videoHeight`；Canvas 显示区域与视频、舞台完全重合，归一化坐标乘以源像素尺寸绘制，骨架映射 1:1。
 - 画面**不镜像**，方便核对坐标；界面上明确标注 `NOT MIRRORED`、`CONTAIN` 和源宽高比。
 - 基于关键点进行上肢 / 下肢完整性判断。若完整画面模式下仍缺少头部或下肢，UI 会明确提示这是**摄像头物理视野或站位距离问题，不是页面裁切**，并建议后退、调整俯仰角或关闭 Center Stage / 人像模式。
 - 支持骨架开关、校准网格开关、对应工具提示与状态 HUD。
+
+### 采集模式
+
+- **Upper Body（默认）**：只要求肩、肘、腕至少各一个关键点稳定可见；躯干（髋部）可见性继续展示，但下肢不计入要求。该模式只绘制上半身骨架，适合未来靠近摄像头的 Motion Ghost / Motion Arena 上半身动作。
+- **Full Body**：要求头部、肩部、髋部、膝部、踝/足部均稳定可见且位于原始画面内；缺项时显示 `Full Body 采集条件未满足` 并列出缺少部位，提示调整站位。
+- 模式可在采集中随时切换，立即重新计算质控；不会重启摄像头，也不会改变原始视频的 `contain` 显示或骨架坐标映射。
+- 两种模式都使用同一完整原始画面，禁止通过裁切或数字缩放扩大视野。
 
 ### 姿态推理
 
@@ -80,9 +89,9 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 - 摄像头权限拒绝、无设备、设备占用、约束不满足、非安全上下文。
 - MediaPipe WASM / 模型加载失败。
 - GPU 创建失败时 UI 显示回退原因。
-- 无人体、关键关节可见性不足、模型推理中断。
-- 33 个关键点中，实时展示 8 个关键关节可见性及 33 点平均可见性。
-- 所有阈值集中在 `src/config/constants.ts`，并明确标记为工程启发式阈值。
+- 无人体、所选模式质控未满足、模型推理中断。
+- 根据模式实时展示 Upper Body / Full Body 关键点、核心组就绪状态及 33 点平均可见性。
+- 所有阈值与模式关键点组集中在 `src/config/constants.ts`，并明确标记为工程启发式阈值。
 
 ---
 
@@ -181,13 +190,15 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 
 ### 已验证
 
-- `npm test`：**26 / 26 通过**（时间戳单调性、媒体时间映射、FPS 滚动窗口、EMA、姿态可见性、关键点分类、坐标映射、全景/上下肢缺失判断）。
+- `npm test`：**31 / 31 通过**（时间戳、FPS、EMA、姿态可见性、坐标映射、Full Body 完整性，以及 Upper / Full 模式核心组判定）。
 - `npm run build`：TypeScript 与 Vite 生产构建通过。
 - 浏览器自动化（macOS 15.2 arm64，Chrome 155 headless，虚拟摄像头）：
   - 1280×720 输入：GPU 11.9 FPS / 14.8–18.9 ms；Canvas 1280×720。
   - 640×426 官方姿态测试图输入：GPU 11.8 FPS / 14.9 ms，检测到 8/8 关键关节，骨架实际绘制。
-  - 完整画面校验：`object-fit=contain`、`transform=none`、`scale=1`；视频 / 舞台 / Canvas 边界误差均为 0px，Canvas 与舞台宽高比均为 1.502。
-  - 原始画面下肢截断测试：正常显示 6/8 关键关节，并出现“未稳定检测到完整下肢”物理视野提示。
+  - 完整画面校验：`object-fit=contain`、`transform=none`、`scale=1`；视频 / 舞台 / Canvas 边界误差均为 0px。
+  - 设备选择：枚举到虚拟摄像头；停止后选择具体 `deviceId` 并重新启动成功。
+  - 原始画面下肢截断测试：Upper Body 为 `READY`（3/3 核心组）且无告警；切换 Full Body 后立即变为 `ADJUST`（4/5），提示缺少踝/足部；切回 Upper Body 恢复 `READY`。
+  - 模式骨架：Upper Body 只绘制上半身；Full Body 保留全身骨架。
   - CPU delegate：11.9 FPS / 23.3 ms，8/8 关键关节。
   - 暂停后视频轨道 `enabled=false`；恢复后 `enabled=true` 且帧数继续增长；停止后 `srcObject=null`、轨道 `readyState=ended`。
   - 无外部资源请求；CSP 阻断 Google 遥测端点。
@@ -217,6 +228,16 @@ npm run preview   # 预览生产构建：http://127.0.0.1:4173
 1. Chrome 地址栏左侧 → 网站设置 → 摄像头 → 允许。
 2. macOS：系统设置 → 隐私与安全性 → 摄像头 → 允许 Google Chrome。
 3. 刷新页面并重试。
+
+**看不到 iPhone 连续互通相机**
+
+1. iPhone 解锁、靠近 Mac、与 Mac 登录同一 Apple ID，并开启 Wi‑Fi / 蓝牙。
+2. 在 Chrome 中先允许一次摄像头权限，然后点击设备列表旁的“刷新设备”。
+3. 如 Chrome 菜单中未启用连续互通，检查 macOS 的相机 / 连续互通设置；必要时重启 Chrome。
+
+**设备名称显示为“视频设备 1”**
+
+Chrome 在首次授权前会隐藏设备名称。启动一次摄像头后点击“刷新设备”，名称即可显示。
 
 **提示设备被占用**
 

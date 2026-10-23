@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { KEY_JOINT_INDICES, QUALITY_THRESHOLDS } from "../config/constants";
 import type { PosePoint } from "../types/pose";
 import {
+  assessCaptureReadiness,
   assessFraming,
   averageVisibility,
   classifyPoseSignal,
@@ -83,6 +84,59 @@ describe("assessFraming", () => {
   it("returns unknown without a complete pose", () => {
     expect(assessFraming(null)).toBe("unknown");
     expect(assessFraming(makeLandmarks(0.9).slice(0, 20))).toBe("unknown");
+  });
+});
+
+describe("assessCaptureReadiness", () => {
+  it("Upper Body is ready without the lower body", () => {
+    const landmarks = makeLandmarks(0.9);
+    for (const index of [25, 26, 27, 28, 29, 30, 31, 32]) {
+      landmarks[index].visibility = 0;
+    }
+    const readiness = assessCaptureReadiness(landmarks, "upper-body");
+    expect(readiness.ready).toBe(true);
+    expect(readiness.visibleGroups).toBe(3);
+    expect(readiness.totalGroups).toBe(3);
+    expect(readiness.missingLabels).toEqual([]);
+  });
+
+  it("Upper Body reports a missing elbow or wrist group", () => {
+    const landmarks = makeLandmarks(0.9);
+    landmarks[15].visibility = 0;
+    landmarks[16].visibility = 0;
+    const readiness = assessCaptureReadiness(landmarks, "upper-body");
+    expect(readiness.ready).toBe(false);
+    expect(readiness.visibleGroups).toBe(2);
+    expect(readiness.missingLabels).toEqual(["腕部"]);
+  });
+
+  it("Full Body requires every major body region", () => {
+    const landmarks = makeLandmarks(0.9);
+    expect(assessCaptureReadiness(landmarks, "full-body").ready).toBe(true);
+
+    for (const index of [27, 28, 31, 32]) {
+      landmarks[index].visibility = 0;
+    }
+    const readiness = assessCaptureReadiness(landmarks, "full-body");
+    expect(readiness.ready).toBe(false);
+    expect(readiness.missingLabels).toContain("踝/足部");
+  });
+
+  it("Full Body rejects a head that is outside the original frame", () => {
+    const landmarks = makeLandmarks(0.9);
+    for (const index of [0, 7, 8]) {
+      landmarks[index].visibility = 0;
+    }
+    const readiness = assessCaptureReadiness(landmarks, "full-body");
+    expect(readiness.ready).toBe(false);
+    expect(readiness.missingLabels).toContain("头部");
+  });
+
+  it("returns all required groups missing without a pose", () => {
+    const readiness = assessCaptureReadiness(null, "upper-body");
+    expect(readiness.ready).toBe(false);
+    expect(readiness.visibleGroups).toBe(0);
+    expect(readiness.missingLabels).toEqual(["肩部", "肘部", "腕部"]);
   });
 });
 

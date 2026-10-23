@@ -1,3 +1,5 @@
+import type { CaptureMode } from "../types/pose";
+
 /**
  * Engineering configuration for SpineMotion 2.0.
  *
@@ -42,6 +44,60 @@ export const QUALITY_THRESHOLDS = {
 
 export const ENGINEERING_NOTE =
   "以上为工程启发式阈值，仅用于交互演示与质量控制原型，不是临床验证标准。";
+
+export interface JointRequirementGroup {
+  label: string;
+  indices: readonly number[];
+}
+
+export interface CaptureModeDefinition {
+  label: string;
+  labelZh: string;
+  description: string;
+  rule: string;
+  requiredGroups: readonly JointRequirementGroup[];
+  displayIndices: readonly number[];
+}
+
+/**
+ * Upper Body is intended for seated / close-camera work and for future
+ * Motion Ghost / Motion Arena recordings that do not require the lower body.
+ * Full Body additionally requires head, hips, knees and ankles in frame.
+ */
+export const CAPTURE_MODES: Record<CaptureMode, CaptureModeDefinition> = {
+  "upper-body": {
+    label: "Upper Body",
+    labelZh: "上半身",
+    description: "肩 / 肘 / 腕 / 躯干",
+    rule: "肩、肘、腕至少各一个关键点稳定可见；下肢不计入要求，预览只绘制上半身骨架。",
+    requiredGroups: [
+      { label: "肩部", indices: [11, 12] },
+      { label: "肘部", indices: [13, 14] },
+      { label: "腕部", indices: [15, 16] },
+    ],
+    displayIndices: [11, 12, 13, 14, 15, 16, 23, 24],
+  },
+  "full-body": {
+    label: "Full Body",
+    labelZh: "全身",
+    description: "头 / 肩 / 髋 / 膝 / 踝",
+    rule: "头部、肩部、髋部、膝部、踝/足部均需稳定可见并位于画面内。",
+    requiredGroups: [
+      { label: "头部", indices: [0, 7, 8] },
+      { label: "肩部", indices: [11, 12] },
+      { label: "髋部", indices: [23, 24] },
+      { label: "膝部", indices: [25, 26] },
+      { label: "踝/足部", indices: [27, 28, 31, 32] },
+    ],
+    displayIndices: [0, 11, 12, 23, 24, 25, 26, 27, 28],
+  },
+};
+
+export const CAPTURE_MODE_OPTIONS: readonly CaptureMode[] = [
+  "upper-body",
+  "full-body",
+];
+export const DEFAULT_CAPTURE_MODE: CaptureMode = "upper-body";
 
 export const POSE_MODEL_PATH = "models/pose_landmarker_lite.task";
 export const MEDIAPIPE_WASM_PATH = "wasm";

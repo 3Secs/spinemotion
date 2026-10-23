@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CameraStage } from "../components/capture/CameraStage";
 import { ControlPanel } from "../components/capture/ControlPanel";
 import { KeypointPanel } from "../components/capture/KeypointPanel";
@@ -10,22 +10,33 @@ import {
   ScanIcon,
   ShieldIcon,
 } from "../components/Icons";
-import { CAPTURE_CONFIG, ENGINEERING_NOTE } from "../config/constants";
+import {
+  CAPTURE_CONFIG,
+  DEFAULT_CAPTURE_MODE,
+  ENGINEERING_NOTE,
+} from "../config/constants";
 import { usePoseCapture } from "../hooks/usePoseCapture";
-import type { DelegateMode } from "../types/pose";
+import { assessCaptureReadiness } from "../lib/pose";
+import type { CaptureMode, DelegateMode } from "../types/pose";
 
 export function CapturePage() {
   const [targetFps, setTargetFps] = useState<number>(CAPTURE_CONFIG.defaultTargetFps);
   const [delegateMode, setDelegateMode] = useState<DelegateMode>("auto");
+  const [captureMode, setCaptureMode] = useState<CaptureMode>(DEFAULT_CAPTURE_MODE);
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
 
   const capture = usePoseCapture({
     targetFps,
     delegateMode,
+    captureMode,
     showSkeleton,
     showGrid,
   });
+  const readiness = useMemo(
+    () => assessCaptureReadiness(capture.live.landmarks, captureMode),
+    [capture.live.landmarks, captureMode],
+  );
 
   return (
     <div className="capture-page page-enter">
@@ -60,6 +71,8 @@ export function CapturePage() {
             live={capture.live}
             videoSize={capture.videoSize}
             delegateInfo={capture.delegateInfo}
+            captureMode={captureMode}
+            readiness={readiness}
             showSkeleton={showSkeleton}
             showGrid={showGrid}
             onToggleSkeleton={() => setShowSkeleton((value) => !value)}
@@ -70,7 +83,12 @@ export function CapturePage() {
           />
 
           <div className="capture-secondary">
-            <KeypointPanel live={capture.live} phase={capture.phase} />
+            <KeypointPanel
+              live={capture.live}
+              phase={capture.phase}
+              captureMode={captureMode}
+              readiness={readiness}
+            />
             <section className="panel method-panel">
               <div className="panel-kicker">
                 <InfoIcon />
@@ -81,20 +99,31 @@ export function CapturePage() {
                 <li>
                   <CameraIcon />
                   <div>
-                    <strong>采集</strong>
+                    <strong>设备</strong>
                     <span>
-                      首选取 1280×720 / 30fps；预览固定为完整原始画面（contain），
-                      不放大、不裁切。
+                      支持 Mac 内置摄像头、iPhone 连续互通相机和 USB 摄像头。
+                      首选取 1280×720 / 30fps，停止后可切换设备。
                     </span>
                   </div>
                 </li>
                 <li>
                   <ScanIcon />
                   <div>
-                    <strong>视野</strong>
+                    <strong>采集模式</strong>
                     <span>
-                      完整画面模式下若仍缺少头部或下肢，提示为摄像头物理视角或站位问题；
-                      应用不会用数字缩放伪造视野。
+                      Upper Body 只要求肩、肘、腕与可见躯干关键点；Full Body
+                      额外检查头部、髋、膝、踝是否全部入镜。模式只改变质控规则，
+                      不改变摄像头视野。
+                    </span>
+                  </div>
+                </li>
+                <li>
+                  <ScanIcon />
+                  <div>
+                    <strong>完整画面</strong>
+                    <span>
+                      两种模式均使用 object-fit: contain 的完整原始画面，不放大、不裁切。
+                      若所需部位仍无法入镜，属于摄像头物理视野或站位距离限制。
                     </span>
                   </div>
                 </li>
@@ -131,8 +160,16 @@ export function CapturePage() {
             modelStatus={capture.modelStatus}
             metrics={capture.metrics}
             delegateInfo={capture.delegateInfo}
+            captureMode={captureMode}
+            cameraDevices={capture.cameraDevices}
+            selectedDeviceId={capture.selectedDeviceId}
+            devicesLoading={capture.devicesLoading}
+            devicesError={capture.devicesError}
             targetFps={targetFps}
             delegateMode={delegateMode}
+            onCaptureModeChange={setCaptureMode}
+            onSelectDevice={capture.selectDevice}
+            onRefreshDevices={() => { void capture.refreshDevices(); }}
             onTargetFpsChange={setTargetFps}
             onDelegateModeChange={setDelegateMode}
             onStart={capture.start}

@@ -1,5 +1,5 @@
 import { CAPTURE_CONFIG } from "../config/constants";
-import type { CaptureError } from "../types/pose";
+import type { CameraDevice, CaptureError } from "../types/pose";
 
 export function cameraErrorToCaptureError(error: unknown): CaptureError {
   const name =
@@ -29,8 +29,9 @@ export function cameraErrorToCaptureError(error: unknown): CaptureError {
     return {
       code: "CAMERA_NOT_FOUND",
       title: "没有找到可用摄像头",
-      detail: "浏览器未能枚举到视频输入设备。",
-      hint: "确认 Mac 内置摄像头或外接摄像头已连接，关闭占用摄像头的其他应用后重试。",
+      detail: "浏览器未能枚举到所选的视频输入设备。",
+      hint:
+        "确认 Mac 内置摄像头、iPhone 连续互通相机或 USB 摄像头已连接；刷新设备列表后重新选择，并关闭占用摄像头的其他应用。",
     };
   }
 
@@ -46,9 +47,10 @@ export function cameraErrorToCaptureError(error: unknown): CaptureError {
   if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
     return {
       code: "CAMERA_CONSTRAINT",
-      title: "摄像头不支持请求的分辨率",
-      detail: message || "无法满足 1280×720 的首选采集参数。",
-      hint: "关闭其他占用摄像头的应用后重试；应用会自动使用设备可用的分辨率。",
+      title: "所选摄像头当前不可用",
+      detail: message || "摄像头已断开，或无法满足设备 ID / 分辨率约束。",
+      hint:
+        "刷新设备列表并重新选择摄像头；iPhone 连续互通相机需保持解锁、靠近且未被其他应用占用。应用只固定设备，不强制分辨率。",
     };
   }
 
@@ -88,7 +90,25 @@ export function modelErrorToCaptureError(error: unknown): CaptureError {
   };
 }
 
-export async function requestCamera(): Promise<MediaStream> {
+export async function listVideoDevices(): Promise<CameraDevice[]> {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    throw new DOMException(
+      "navigator.mediaDevices.enumerateDevices 不可用",
+      "NotSupportedError",
+    );
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices
+    .filter((device) => device.kind === "videoinput" && device.deviceId.length > 0)
+    .map((device, index) => ({
+      deviceId: device.deviceId,
+      label: device.label || `视频设备 ${index + 1}`,
+      groupId: device.groupId,
+    }));
+}
+
+export async function requestCamera(deviceId?: string): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new DOMException(
       "navigator.mediaDevices.getUserMedia 不可用",
@@ -96,14 +116,18 @@ export async function requestCamera(): Promise<MediaStream> {
     );
   }
 
+  const videoConstraints: MediaTrackConstraints = {
+    width: CAPTURE_CONFIG.camera.width,
+    height: CAPTURE_CONFIG.camera.height,
+    frameRate: CAPTURE_CONFIG.camera.frameRate,
+  };
+  if (deviceId) {
+    videoConstraints.deviceId = { exact: deviceId };
+  }
+
   return navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: {
-      facingMode: "user",
-      width: CAPTURE_CONFIG.camera.width,
-      height: CAPTURE_CONFIG.camera.height,
-      frameRate: CAPTURE_CONFIG.camera.frameRate,
-    },
+    video: videoConstraints,
   });
 }
 

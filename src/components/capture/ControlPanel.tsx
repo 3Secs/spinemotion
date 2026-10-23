@@ -1,5 +1,7 @@
 import {
   CAPTURE_CONFIG,
+  CAPTURE_MODES,
+  CAPTURE_MODE_OPTIONS,
   QUALITY_THRESHOLDS,
 } from "../../config/constants";
 import {
@@ -12,7 +14,9 @@ import {
 } from "../../components/Icons";
 import { formatSeconds } from "../../lib/time";
 import type {
+  CameraDevice,
   CaptureMetrics,
+  CaptureMode,
   CapturePhase,
   DelegateInfo,
   DelegateMode,
@@ -24,8 +28,16 @@ interface ControlPanelProps {
   modelStatus: ModelStatus;
   metrics: CaptureMetrics;
   delegateInfo: DelegateInfo;
+  captureMode: CaptureMode;
+  cameraDevices: CameraDevice[];
+  selectedDeviceId: string;
+  devicesLoading: boolean;
+  devicesError: string | null;
   targetFps: number;
   delegateMode: DelegateMode;
+  onCaptureModeChange: (mode: CaptureMode) => void;
+  onSelectDevice: (deviceId: string) => void;
+  onRefreshDevices: () => void;
   onTargetFpsChange: (fps: number) => void;
   onDelegateModeChange: (mode: DelegateMode) => void;
   onStart: () => void;
@@ -46,8 +58,16 @@ export function ControlPanel({
   modelStatus,
   metrics,
   delegateInfo,
+  captureMode,
+  cameraDevices,
+  selectedDeviceId,
+  devicesLoading,
+  devicesError,
   targetFps,
   delegateMode,
+  onCaptureModeChange,
+  onSelectDevice,
+  onRefreshDevices,
   onTargetFpsChange,
   onDelegateModeChange,
   onStart,
@@ -61,6 +81,7 @@ export function ControlPanel({
   const isIdleOrError = phase === "idle" || phase === "error";
   const active = isRunning || isPaused || isStarting;
   const showMetrics = metrics.frames > 0;
+  const modeDefinition = CAPTURE_MODES[captureMode];
 
   return (
     <section className="panel control-panel" aria-label="采集控制">
@@ -92,6 +113,70 @@ export function ControlPanel({
           <span>{delegateInfo.fallbackNote}</span>
         </div>
       )}
+
+      <div className="mode-block">
+        <div className="setting-label-row">
+          <span className="setting-label">采集模式</span>
+          <span className="setting-hint">只改变质控规则，不改变视野</span>
+        </div>
+        <div className="mode-options" role="group" aria-label="采集模式">
+          {CAPTURE_MODE_OPTIONS.map((mode) => {
+            const definition = CAPTURE_MODES[mode];
+            return (
+              <button
+                key={mode}
+                className={`mode-option ${captureMode === mode ? "is-active" : ""}`}
+                aria-pressed={captureMode === mode}
+                onClick={() => onCaptureModeChange(mode)}
+              >
+                <strong>{definition.label}</strong>
+                <span>{definition.description}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mode-rule">{modeDefinition.rule}</p>
+      </div>
+
+      <div className="settings-block device-block">
+        <div className="setting-label-row">
+          <label className="setting-label" htmlFor="camera-device">
+            摄像头设备
+          </label>
+          <button
+            type="button"
+            className="text-button"
+            onClick={onRefreshDevices}
+            disabled={active || devicesLoading}
+          >
+            {devicesLoading ? "刷新中…" : "刷新设备"}
+          </button>
+        </div>
+        <select
+          id="camera-device"
+          className="select"
+          value={selectedDeviceId}
+          disabled={active || devicesLoading}
+          onChange={(event) => onSelectDevice(event.target.value)}
+        >
+          <option value="">系统默认摄像头</option>
+          {cameraDevices.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label}
+            </option>
+          ))}
+        </select>
+        <span className="device-hint">
+          {active
+            ? "停止采集后可切换设备。"
+            : devicesLoading
+              ? "正在读取视频输入设备…"
+              : cameraDevices.length > 0
+                ? `${cameraDevices.length} 个视频输入 · 支持内置 / 连续互通 / USB`
+                : "尚未发现设备；首次授权后会显示设备名称。"}
+        </span>
+        {devicesError && <span className="device-error">{devicesError}</span>}
+      </div>
 
       <div className="control-actions">
         {isIdleOrError && (
@@ -214,9 +299,9 @@ export function ControlPanel({
       <div className="threshold-note">
         <InfoIcon />
         <span>
-          可见性阈值 {QUALITY_THRESHOLDS.keyJointVisible.toFixed(2)}、
-          关键关节 ≥ {QUALITY_THRESHOLDS.minVisibleKeyJoints}/8 仅用于实时提示，
-          属于工程启发式参数。
+          可见性阈值 {QUALITY_THRESHOLDS.keyJointVisible.toFixed(2)}；
+          Upper Body / Full Body 按各自关键点组判定。以上均为工程启发式参数，
+          不是临床标准。
         </span>
       </div>
     </section>

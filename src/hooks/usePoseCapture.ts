@@ -5,6 +5,7 @@ import {
 } from "../config/constants";
 import {
   cameraErrorToCaptureError,
+  listVideoDevices,
   modelErrorToCaptureError,
   requestCamera,
   stopMediaStream,
@@ -21,8 +22,10 @@ import {
 import { createPoseEngine, type PoseEngine } from "../lib/poseLandmarker";
 import { nextMonotonicTimestamp } from "../lib/time";
 import type {
+  CameraDevice,
   CaptureError,
   CaptureMetrics,
+  CaptureMode,
   CapturePhase,
   DelegateInfo,
   DelegateMode,
@@ -55,6 +58,7 @@ const EMPTY_VIDEO_SIZE: VideoSize = { width: 0, height: 0 };
 interface UsePoseCaptureOptions {
   targetFps: number;
   delegateMode: DelegateMode;
+  captureMode: CaptureMode;
   showSkeleton: boolean;
   showGrid: boolean;
 }
@@ -62,6 +66,7 @@ interface UsePoseCaptureOptions {
 export function usePoseCapture({
   targetFps,
   delegateMode,
+  captureMode,
   showSkeleton,
   showGrid,
 }: UsePoseCaptureOptions) {
@@ -75,6 +80,10 @@ export function usePoseCapture({
   const [live, setLive] = useState<LivePoseState>(EMPTY_LIVE);
   const [videoSize, setVideoSize] = useState<VideoSize>(EMPTY_VIDEO_SIZE);
   const [delegateInfo, setDelegateInfo] = useState<DelegateInfo>(EMPTY_DELEGATE);
+  const [cameraDevices, setCameraDevices] = useState<CameraDevice[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [devicesError, setDevicesError] = useState<string | null>(null);
 
   const phaseRef = useRef<CapturePhase>("idle");
   const activeRef = useRef(false);
@@ -91,8 +100,10 @@ export function usePoseCapture({
   const lastLandmarksRef = useRef<PosePoint[] | null>(null);
   const lastUiUpdateRef = useRef(0);
   const framesRef = useRef(0);
+  const selectedDeviceIdRef = useRef("");
   const targetFpsRef = useRef(targetFps);
   const delegateModeRef = useRef(delegateMode);
+  const captureModeRef = useRef(captureMode);
   const showSkeletonRef = useRef(showSkeleton);
   const showGridRef = useRef(showGrid);
   const fpsMeterRef = useRef(new FpsMeter(1500, QUALITY_THRESHOLDS.fpsWarmupMs));
@@ -115,12 +126,66 @@ export function usePoseCapture({
     delegateModeRef.current = delegateMode;
   }, [delegateMode]);
 
+  const refreshDevices = useCallback(async (): Promise<CameraDevice[]> => {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      setDevicesError("当前浏览器不支持摄像头设备枚举。");
+      return [];
+    }
+
+    setDevicesLoading(true);
+    try {
+      const devices = await listVideoDevices();
+      setCameraDevices(devices);
+      setDevicesError(null);
+
+      const current = selectedDeviceIdRef.current;
+      if (current && !devices.some((device) => device.deviceId === current)) {
+        selectedDeviceIdRef.current = "";
+        setSelectedDeviceId("");
+      }
+      return devices;
+    } catch (cause) {
+      setDevicesError(
+        cause instanceof Error ? cause.message : "无法读取摄像头设备列表。",
+      );
+      return [];
+    } finally {
+      setDevicesLoading(false);
+    }
+  }, []);
+
+  const selectDevice = useCallback((deviceId: string) => {
+    if (
+      phaseRef.current === "starting" ||
+      phaseRef.current === "running" ||
+      phaseRef.current === "paused"
+    ) {
+      return;
+    }
+    selectedDeviceIdRef.current = deviceId;
+    setSelectedDeviceId(deviceId);
+  }, []);
+
+  useEffect(() => {
+    void refreshDevices();
+    const mediaDevices = navigator.mediaDevices;
+    if (!mediaDevices?.addEventListener) return;
+    const handleDeviceChange = () => {
+      void refreshDevices();
+    };
+    mediaDevices.addEventListener("devicechange", handleDeviceChange);
+    return () => {
+      mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+    };
+  }, [refreshDevices]);
+
   const drawLatest = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     renderOverlay(canvas, lastLandmarksRef.current, {
       showSkeleton: showSkeletonRef.current,
       showGrid: showGridRef.current,
+      captureMode: captureModeRef.current,
     });
   }, []);
 
@@ -129,6 +194,11 @@ export function usePoseCapture({
     showGridRef.current = showGrid;
     drawLatest();
   }, [showSkeleton, showGrid, drawLatest]);
+
+  useEffect(() => {
+    captureModeRef.current = captureMode;
+    drawLatest();
+  }, [captureMode, drawLatest]);
 
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -379,12 +449,40 @@ export function usePoseCapture({
 
     let stream: MediaStream | null = null;
     try {
-      stream = await requestCamera();
+      stream = await requestCamera(selectedDeviceIdRef.current || undefined);
       if (isStale()) {
         stopMediaStream(stream);
         return;
       }
       streamRef.current = stream;
+
+      const videoTrack = stream.getVideoTracks()[0];
+      void refreshDevices();
+
+      videoTrack?.addEventListener(
+        "ended",
+        () => {
+          if (operationId !== operationIdRef.current || !activeRef.current) {
+            return;
+          }
+          activeRef.current = false;
+          pausedRef.current = true;
+          cancelInferenceTimer();
+          detachStream();
+          setError({
+            code: "CAMERA_DISCONNECTED",
+            title: "摄像头连接已断开",
+            detail:
+              "所选摄像头轨道已结束。可能是 USB 被拔出、iPhone 连续互通相机断开，或设备被其他应用占用。",
+            hint:
+              "重新连接设备后刷新摄像头列表，再次选择设备并启动。其他已完成的页面数据不受影响。",
+          });
+          setModelStatus(engineRef.current ? "ready" : "idle");
+          updatePhase("error");
+          void refreshDevices();
+        },
+        { once: true },
+      );
 
       const video = videoRef.current;
       if (!video) {
@@ -407,6 +505,7 @@ export function usePoseCapture({
       setModelStatus(engineRef.current ? "ready" : "idle");
       setError(cameraErrorToCaptureError(cause));
       updatePhase("error");
+      void refreshDevices();
       return;
     }
 
@@ -457,6 +556,7 @@ export function usePoseCapture({
     detachStream,
     ensureEngine,
     kickInference,
+    refreshDevices,
     syncVideoSize,
     updatePhase,
   ]);
@@ -548,6 +648,12 @@ export function usePoseCapture({
     live,
     videoSize,
     delegateInfo,
+    cameraDevices,
+    selectedDeviceId,
+    devicesLoading,
+    devicesError,
+    refreshDevices,
+    selectDevice,
     start,
     pause,
     resume,

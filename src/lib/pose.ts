@@ -1,10 +1,17 @@
 import {
+  CAPTURE_MODES,
   CONNECTION_COLORS,
   KEY_JOINT_INDICES,
   POSE_CONNECTIONS,
   QUALITY_THRESHOLDS,
 } from "../config/constants";
-import type { FramingState, PosePoint, PoseSignal } from "../types/pose";
+import type {
+  CaptureMode,
+  CaptureReadiness,
+  FramingState,
+  PosePoint,
+  PoseSignal,
+} from "../types/pose";
 
 interface NormalizedLandmarkLike {
   x: number;
@@ -16,6 +23,7 @@ interface NormalizedLandmarkLike {
 export interface OverlayOptions {
   showSkeleton: boolean;
   showGrid: boolean;
+  captureMode: CaptureMode;
 }
 
 export function toPosePoint(landmark: NormalizedLandmarkLike): PosePoint {
@@ -83,6 +91,51 @@ export function assessFraming(
   return "full";
 }
 
+/**
+ * Mode-aware capture readiness. Upper Body deliberately ignores the lower
+ * body; Full Body requires one stable point from every major body region and
+ * that point must remain inside the original camera frame.
+ */
+export function assessCaptureReadiness(
+  landmarks: readonly PosePoint[] | null,
+  mode: CaptureMode,
+  threshold = QUALITY_THRESHOLDS.keyJointVisible,
+): CaptureReadiness {
+  const definition = CAPTURE_MODES[mode];
+  if (!landmarks || landmarks.length < 33) {
+    return {
+      mode,
+      ready: false,
+      visibleGroups: 0,
+      totalGroups: definition.requiredGroups.length,
+      missingLabels: definition.requiredGroups.map((group) => group.label),
+    };
+  }
+
+  const available = (index: number) => {
+    const point = landmarks[index];
+    if (!point || point.visibility < threshold) return false;
+    return (
+      point.x >= 0 &&
+      point.x <= 1 &&
+      point.y >= 0 &&
+      point.y <= 1
+    );
+  };
+
+  const missingLabels = definition.requiredGroups
+    .filter((group) => !group.indices.some(available))
+    .map((group) => group.label);
+
+  return {
+    mode,
+    ready: missingLabels.length === 0,
+    visibleGroups: definition.requiredGroups.length - missingLabels.length,
+    totalGroups: definition.requiredGroups.length,
+    missingLabels,
+  };
+}
+
 export function classifyPoseSignal(
   landmarks: readonly PosePoint[] | null,
   nowMs: number,
@@ -124,7 +177,7 @@ export function renderOverlay(
     drawCalibrationGrid(ctx, width, height);
   }
   if (options.showSkeleton && landmarks) {
-    drawSkeleton(ctx, landmarks, width, height);
+    drawSkeleton(ctx, landmarks, width, height, options.captureMode);
   }
 }
 
@@ -180,15 +233,23 @@ function drawSkeleton(
   landmarks: readonly PosePoint[],
   width: number,
   height: number,
+  captureMode: CaptureMode,
 ): void {
   const unit = Math.max(0.75, width / 720);
   const threshold = QUALITY_THRESHOLDS.landmarkVisible;
+  const upperBodyOnly = captureMode === "upper-body";
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
   for (const connection of POSE_CONNECTIONS) {
+    if (
+      upperBodyOnly &&
+      (connection.group === "leftLeg" || connection.group === "rightLeg")
+    ) {
+      continue;
+    }
     const from = landmarks[connection.from];
     const to = landmarks[connection.to];
     if (!from || !to) continue;
@@ -218,6 +279,8 @@ function drawSkeleton(
   }
 
   for (let index = 0; index < landmarks.length; index += 1) {
+    // MediaPipe indices 25–32 are knees, ankles and feet.
+    if (upperBodyOnly && index >= 25) continue;
     const point = landmarks[index];
     if (!point || point.visibility < threshold) continue;
     const pixel = toPixelCoordinate(point, width, height);
