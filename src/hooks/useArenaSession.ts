@@ -31,6 +31,7 @@ export function useArenaSession() {
   const [recordingValidFrames, setRecordingValidFrames] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [recordingActive, setRecordingActive] = useState(false);
   const [score, setScore] = useState<ArenaScore | null>(null);
   const [refusalReason, setRefusalReason] = useState<string | null>(null);
   const [refusalWarnings, setRefusalWarnings] = useState<string[]>([]);
@@ -102,6 +103,7 @@ export function useArenaSession() {
     (which: "A" | "B") => {
       if (!recordingActiveRef.current) return;
       recordingActiveRef.current = false;
+      setRecordingActive(false);
       activePlayerRef.current = null;
       stopProgressTimer();
       clearCountdown();
@@ -223,6 +225,7 @@ export function useArenaSession() {
       recorder.start();
       recorderRef.current = recorder;
       recordingActiveRef.current = true;
+      setRecordingActive(true);
       activePlayerRef.current = which;
       recordingStartedPerfRef.current = performance.now();
       setCountdown(null);
@@ -271,6 +274,7 @@ export function useArenaSession() {
 
   const resetSession = useCallback(() => {
     recordingActiveRef.current = false;
+    setRecordingActive(false);
     activePlayerRef.current = null;
     stopProgressTimer();
     clearCountdown();
@@ -349,6 +353,7 @@ export function useArenaSession() {
     recordingElapsedMs,
     recordingFrameCount,
     recordingValidFrames,
+    isRecording: recordingActive,
     error,
     notice,
     score,

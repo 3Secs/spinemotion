@@ -41,7 +41,6 @@ export function MotionArenaPage() {
   const readiness = assessCaptureReadiness(capture.live.landmarks, session.captureMode);
 
   const cameraReady = capture.phase === "running";
-  const isRecording = step === "player-a" || step === "player-b";
   const isConfirming = step === "confirm-a" || step === "confirm-b";
   const isResults = step === "results";
 
@@ -56,7 +55,7 @@ export function MotionArenaPage() {
           <span>准备录制 · 让身体完整进入画面</span>
         </div>
       )}
-      {isRecording && countdown === null && (
+      {session.isRecording && countdown === null && (
         <div className="countdown-overlay is-go" style={{ opacity: 0.7 }}>
           <span className="countdown-kicker">REC · {playerLabelText}</span>
           <strong>{formatMs(session.recordingElapsedMs)}</strong>
@@ -181,7 +180,7 @@ export function MotionArenaPage() {
             devicesLoading={capture.devicesLoading}
             devicesError={capture.devicesError}
             captureMode={session.captureMode}
-            locked={isRecording}
+            locked={session.isRecording}
             onStart={capture.start}
             onStop={capture.stop}
             onRefreshDevices={() => { void capture.refreshDevices(); }}
@@ -204,7 +203,7 @@ export function MotionArenaPage() {
               max={GHOST_CONFIG.maxDurationSec}
               step={1}
               value={session.durationSec}
-              disabled={isRecording || isConfirming || isResults}
+              disabled={session.isRecording || isConfirming || isResults}
               onChange={(e) => session.setDurationSec(Number(e.target.value))}
             />
             <div className="range-labels">
@@ -250,19 +249,26 @@ export function MotionArenaPage() {
             </div>
 
             <div className="control-actions">
+              {/* Step "player-b" idle (not recording yet) — show start button */}
+              {step === "player-b" && !session.isRecording && countdown === null && (
+                <button className="btn btn-primary btn-block" onClick={session.startPlayerB} disabled={!cameraReady}>
+                  <RecordIcon /> 玩家 B 开始录制 ({session.durationSec}s)
+                </button>
+              )}
+
               {step === "setup" && (
                 <button className="btn btn-primary btn-block" onClick={session.startPlayerA} disabled={!cameraReady}>
                   <RecordIcon /> 玩家 A 开始录制 ({session.durationSec}s)
                 </button>
               )}
 
-              {(step === "player-a" || step === "player-b") && countdown === null && (
+              {session.isRecording && countdown === null && (
                 <button className="btn btn-danger-soft btn-block" onClick={session.stopRecording}>
                   <StopIcon /> 结束录制
                 </button>
               )}
 
-              {(step === "player-a" || step === "player-b") && countdown !== null && (
+              {session.isRecording && countdown !== null && (
                 <button className="btn btn-secondary btn-block" disabled>
                   <ClockIcon /> 倒计时 {countdown}
                 </button>
