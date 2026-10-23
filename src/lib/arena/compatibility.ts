@@ -1,6 +1,28 @@
 import { QUALITY_THRESHOLDS } from "../../config/constants";
 import type { ArenaCompatibilityCheck } from "../../types/arena";
-import type { GhostAction } from "../../types/ghost";
+import type { GhostAction, GhostFrame } from "../../types/ghost";
+import type { CaptureMode } from "../../types/pose";
+
+/** Key-joint indices relevant to each capture mode. */
+const MODE_KEY_JOINTS: Record<CaptureMode, readonly number[]> = {
+  "upper-body": [11, 12, 23, 24],
+  "full-body": [11, 12, 23, 24, 25, 26, 27, 28],
+};
+
+/** Minimum key joints that must be visible on a typical frame for each mode. */
+const MODE_MIN_KEY_JOINTS: Record<CaptureMode, number> = {
+  "upper-body": 2,
+  "full-body": 4,
+};
+
+function countModeKeyJoints(frame: GhostFrame, mode: CaptureMode): number {
+  if (!frame.landmarks) return 0;
+  const indices = MODE_KEY_JOINTS[mode];
+  return indices.filter((idx) => {
+    const p = frame.landmarks![idx];
+    return p && p.visibility >= QUALITY_THRESHOLDS.keyJointVisible;
+  }).length;
+}
 
 /**
  * Check whether two GhostAction recordings are compatible for Arena comparison.
@@ -37,16 +59,17 @@ export function checkArenaCompatibility(
   }
 
   if (validA > 0 && validB > 0) {
-    // Check typical joint visibility on the median-valid frame
+    // Check typical joint visibility on the median-valid frame, using the
+    // mode-specific key-joint set so Upper Body does not require knees/ankles.
     const aFrames = a.frames.filter((f) => f.quality.valid);
     const bFrames = b.frames.filter((f) => f.quality.valid);
     const aMedian = aFrames[Math.floor(aFrames.length / 2)];
     const bMedian = bFrames[Math.floor(bFrames.length / 2)];
 
-    if (aMedian && aMedian.quality.visibleKeyJoints < QUALITY_THRESHOLDS.minVisibleKeyJoints) {
+    if (aMedian && countModeKeyJoints(aMedian, a.mode) < MODE_MIN_KEY_JOINTS[a.mode]) {
       reasons.push("参考动作的关键关节点可见数不足，无法进行公平比较。");
     }
-    if (bMedian && bMedian.quality.visibleKeyJoints < QUALITY_THRESHOLDS.minVisibleKeyJoints) {
+    if (bMedian && countModeKeyJoints(bMedian, b.mode) < MODE_MIN_KEY_JOINTS[b.mode]) {
       reasons.push("复刻动作的关键关节点可见数不足，无法进行公平比较。");
     }
   }

@@ -69,4 +69,42 @@ describe("Arena compatibility check", () => {
     const result = checkArenaCompatibility(wide, tall);
     expect(result.warnings.some((w) => w.includes("宽高比"))).toBe(true);
   });
+
+  it("allows upper-body mode without knee/ankle visibility (mode-aware key joints)", () => {
+    const ub = makeAction({ mode: "upper-body" });
+    const modified = {
+      ...ub,
+      frames: ub.frames.map((f) => ({
+        ...f,
+        quality: { ...f.quality, valid: true },
+        landmarks: f.landmarks
+          ? f.landmarks.map((p, idx) =>
+              idx >= 25 ? { ...p, visibility: 0.1 } : p,
+            )
+          : null,
+      })),
+    };
+    const result = checkArenaCompatibility(modified, modified);
+    expect(result.compatible).toBe(true);
+  });
+
+  it("rejects when shoulders and hips are invisible even in upper-body", () => {
+    const ub = makeAction({ mode: "upper-body" });
+    const bad = {
+      ...ub,
+      frames: ub.frames.map((f) => ({
+        ...f,
+        quality: { ...f.quality, valid: true },
+        landmarks: f.landmarks
+          ? f.landmarks.map((p, idx) =>
+              idx === 11 || idx === 12 || idx === 23 || idx === 24
+                ? { ...p, visibility: 0.1 }
+                : p,
+            )
+          : null,
+      })),
+    };
+    const result = checkArenaCompatibility(bad, bad);
+    expect(result.compatible).toBe(false);
+  });
 });
