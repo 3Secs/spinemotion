@@ -10,13 +10,15 @@ import {
   LockIcon,
   ScanIcon,
   ShieldIcon,
-  SparkIcon,
   WarningIcon,
 } from "../components/Icons";
+
+import { SwordsIcon } from "../components/arena/ArenaIcons";
 
 interface DashboardPageProps {
   onOpenCapture: () => void;
   onOpenGhost: () => void;
+  onOpenArena: () => void;
 }
 
 const roadmap = [
@@ -41,8 +43,8 @@ const roadmap = [
     title: "Motion Arena",
     subtitle: "动作复刻挑战",
     description: "尺度归一化、DTW 时间对齐、可解释复刻评分与差异定位。",
-    status: "planned",
-    icon: <SparkIcon />,
+    status: "available",
+    icon: <SwordsIcon />,
   },
   {
     phase: "04",
@@ -70,7 +72,7 @@ const roadmap = [
   },
 ];
 
-export function DashboardPage({ onOpenCapture, onOpenGhost }: DashboardPageProps) {
+export function DashboardPage({ onOpenCapture, onOpenGhost, onOpenArena }: DashboardPageProps) {
   const scrollToRoadmap = () => {
     document.getElementById("roadmap")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -101,6 +103,10 @@ export function DashboardPage({ onOpenCapture, onOpenGhost }: DashboardPageProps
             <button className="btn btn-ghost btn-lg" onClick={onOpenGhost}>
               <GhostIcon />
               打开 Motion Ghost
+            </button>
+            <button className="btn btn-ghost btn-lg" onClick={onOpenArena}>
+              <SwordsIcon />
+              Motion Arena
             </button>
             <button className="btn btn-ghost btn-lg" onClick={scrollToRoadmap}>
               查看开发路线

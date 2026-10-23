@@ -1,0 +1,434 @@
+import { useState } from "react";
+import { CameraStage } from "../components/capture/CameraStage";
+import { GhostCameraPanel } from "../components/ghost/GhostCameraPanel";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  ClockIcon,
+  RecordIcon,
+  RotateIcon,
+  ShieldIcon,
+  SparkIcon,
+  StopIcon,
+  WarningIcon,
+} from "../components/Icons";
+import { TrophyIcon, UserIcon, SwordsIcon, TargetIcon } from "../components/arena/ArenaIcons";
+import { GHOST_CONFIG } from "../config/constants";
+import { useArenaSession } from "../hooks/useArenaSession";
+import { assessCaptureReadiness } from "../lib/pose";
+import type { ArenaScore } from "../types/arena";
+import type { GhostAction } from "../types/ghost";
+
+function formatMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return "00:00.0";
+  const totalSeconds = ms / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds - minutes * 60;
+  return `${String(minutes).padStart(2, "0")}:${seconds.toFixed(1).padStart(4, "0")}`;
+}
+
+function formatSeconds(ms: number): string {
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+export function MotionArenaPage() {
+  const session = useArenaSession();
+  const { step, actionA, actionB, countdown, error, notice, score, refusalReason, refusalWarnings, capture } = session;
+
+  const [showSkeleton, setShowSkeleton] = useState(true);
+  const [showGrid, setShowGrid] = useState(false);
+
+  const readiness = assessCaptureReadiness(capture.live.landmarks, session.captureMode);
+
+  const cameraReady = capture.phase === "running";
+  const isRecording = step === "player-a" || step === "player-b";
+  const isConfirming = step === "confirm-a" || step === "confirm-b";
+  const isResults = step === "results";
+
+  const playerLabelText = step.startsWith("player-a") || step === "confirm-a" ? "玩家 A" : "玩家 B";
+
+  const systemOverlay = (
+    <>
+      {countdown !== null && (
+        <div className="countdown-overlay">
+          <span className="countdown-kicker">RECORDING IN</span>
+          <strong>{countdown}</strong>
+          <span>准备录制 · 让身体完整进入画面</span>
+        </div>
+      )}
+      {isRecording && countdown === null && (
+        <div className="countdown-overlay is-go" style={{ opacity: 0.7 }}>
+          <span className="countdown-kicker">REC · {playerLabelText}</span>
+          <strong>{formatMs(session.recordingElapsedMs)}</strong>
+          <span>{session.recordingFrameCount} 帧 · 有效 {session.recordingValidFrames}</span>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="arena-page page-enter">
+      <header className="page-heading">
+        <div>
+          <div className="eyebrow">
+            <span className="eyebrow-line" />
+            PHASE 3 · MOTION ARENA
+          </div>
+          <h1>动作复刻竞技场</h1>
+          <p>
+            双人依次录制动作，自动比对姿态与节奏，生成可解释的趣味评分。
+            全程在浏览器本地计算，不保存原始视频。
+          </p>
+        </div>
+        <div className="heading-chips">
+          <span className="heading-chip"><SwordsIcon /> HEAD-TO-HEAD</span>
+          <span className="heading-chip"><TargetIcon /> DTW ALIGNMENT</span>
+          <span className="heading-chip"><ShieldIcon /> LOCAL SCORING</span>
+        </div>
+      </header>
+
+      {notice && (
+        <div className="ghost-notice" role="status">
+          <CheckIcon />
+          <span>{notice}</span>
+          <button className="text-button" onClick={session.dismissNotice}>关闭</button>
+        </div>
+      )}
+
+      {error && (
+        <div className="ghost-notice" role="alert" style={{ background: "var(--caution-bg)", color: "var(--caution-text)" }}>
+          <WarningIcon />
+          <span>{error}</span>
+          <button className="text-button" onClick={session.dismissError}>关闭</button>
+        </div>
+      )}
+
+      {/* Step indicator */}
+      <div className="arena-steps" role="tablist" aria-label="竞技流程">
+        {[
+          { key: "setup", label: "准备", sub: "模式与摄像头" },
+          { key: "player-a", label: "玩家 A 录制", sub: `${session.captureMode === "upper-body" ? "上半身" : "全身"} · ${session.durationSec}s` },
+          { key: "player-b", label: "玩家 B 录制", sub: "复刻相同动作" },
+          { key: "results", label: "竞技结果", sub: "评分报告" },
+        ].map((s, idx) => {
+          const active =
+            (s.key === "setup" && (step === "setup")) ||
+            (s.key === "player-a" && (step === "player-a" || step === "confirm-a")) ||
+            (s.key === "player-b" && (step === "player-b" || step === "confirm-b" || step === "analyzing")) ||
+            (s.key === "results" && step === "results");
+          const done =
+            (s.key === "setup" && step !== "setup") ||
+            (s.key === "player-a" && (step === "player-b" || step === "confirm-b" || step === "analyzing" || step === "results")) ||
+            (s.key === "player-b" && (step === "analyzing" || step === "results"));
+          return (
+            <div key={s.key} className={`arena-step ${active ? "is-active" : ""} ${done ? "is-done" : ""}`} role="tab" aria-selected={active}>
+              <span className="arena-step-num">{done ? <CheckIcon /> : idx + 1}</span>
+              <span className="arena-step-label">{s.label}</span>
+              <span className="arena-step-sub">{s.sub}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="arena-layout">
+        <div className="arena-main">
+          {/* Camera stage shared across all steps */}
+          <CameraStage
+            videoRef={capture.videoRef}
+            canvasRef={capture.canvasRef}
+            systemOverlay={systemOverlay}
+            phase={capture.phase}
+            modelStatus={capture.modelStatus}
+            error={capture.error}
+            metrics={capture.metrics}
+            live={capture.live}
+            videoSize={capture.videoSize}
+            delegateInfo={capture.delegateInfo}
+            captureMode={session.captureMode}
+            readiness={readiness}
+            showSkeleton={showSkeleton}
+            showGrid={showGrid}
+            onToggleSkeleton={() => setShowSkeleton((v) => !v)}
+            onToggleGrid={() => setShowGrid((v) => !v)}
+            onStart={capture.start}
+            onResume={capture.resume}
+            onStop={capture.stop}
+          />
+
+          {/* Results panel */}
+          {isResults && (
+            <ArenaResultPanel
+              score={score}
+              refusalReason={refusalReason}
+              refusalWarnings={refusalWarnings}
+              actionA={actionA}
+              actionB={actionB}
+              onReset={session.resetSession}
+            />
+          )}
+        </div>
+
+        <aside className="arena-sidebar">
+          {/* Camera panel */}
+          <GhostCameraPanel
+            phase={capture.phase}
+            modelStatus={capture.modelStatus}
+            metrics={capture.metrics}
+            delegateInfo={capture.delegateInfo}
+            videoSize={capture.videoSize}
+            cameraDevices={capture.cameraDevices}
+            selectedDeviceId={capture.selectedDeviceId}
+            devicesLoading={capture.devicesLoading}
+            devicesError={capture.devicesError}
+            captureMode={session.captureMode}
+            locked={isRecording}
+            onStart={capture.start}
+            onStop={capture.stop}
+            onRefreshDevices={() => { void capture.refreshDevices(); }}
+            onSelectDevice={capture.selectDevice}
+            onCaptureModeChange={session.setCaptureMode}
+          />
+
+          {/* Duration selector */}
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="panel-kicker"><ClockIcon /> DURATION</span>
+                <h2>录制时长</h2>
+              </div>
+            </div>
+            <input
+              className="range-input"
+              type="range"
+              min={GHOST_CONFIG.minDurationSec}
+              max={GHOST_CONFIG.maxDurationSec}
+              step={1}
+              value={session.durationSec}
+              disabled={isRecording || isConfirming || isResults}
+              onChange={(e) => session.setDurationSec(Number(e.target.value))}
+            />
+            <div className="range-labels">
+              <span>5s</span>
+              <span>{session.durationSec}s</span>
+              <span>15s</span>
+            </div>
+          </section>
+
+          {/* Player status */}
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="panel-kicker"><UserIcon /> PLAYERS</span>
+                <h2>选手状态</h2>
+              </div>
+            </div>
+            <div className="arena-player-cards">
+              <div className={`arena-player-card ${actionA ? "is-done" : ""}`}>
+                <div className="player-badge">A</div>
+                <div>
+                  <strong>玩家 A · 参考动作</strong>
+                  <span>{actionA ? `已录制 · ${formatSeconds(actionA.durationMs)} · ${actionA.recording.totalFrames} 帧` : "待录制"}</span>
+                </div>
+              </div>
+              <div className={`arena-player-card ${actionB ? "is-done" : ""}`}>
+                <div className="player-badge">B</div>
+                <div>
+                  <strong>玩家 B · 复刻动作</strong>
+                  <span>{actionB ? `已录制 · ${formatSeconds(actionB.durationMs)} · ${actionB.recording.totalFrames} 帧` : "待录制"}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Action buttons based on step */}
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="panel-kicker"><SwordsIcon /> ACTIONS</span>
+                <h2>操作</h2>
+              </div>
+            </div>
+
+            <div className="control-actions">
+              {step === "setup" && (
+                <button className="btn btn-primary btn-block" onClick={session.startPlayerA} disabled={!cameraReady}>
+                  <RecordIcon /> 玩家 A 开始录制 ({session.durationSec}s)
+                </button>
+              )}
+
+              {(step === "player-a" || step === "player-b") && countdown === null && (
+                <button className="btn btn-danger-soft btn-block" onClick={session.stopRecording}>
+                  <StopIcon /> 结束录制
+                </button>
+              )}
+
+              {(step === "player-a" || step === "player-b") && countdown !== null && (
+                <button className="btn btn-secondary btn-block" disabled>
+                  <ClockIcon /> 倒计时 {countdown}
+                </button>
+              )}
+
+              {step === "confirm-a" && (
+                <div>
+                  <button className="btn btn-primary btn-block" onClick={session.confirmA}>
+                    <ArrowRightIcon /> 确认 · 进入玩家 B 录制
+                  </button>
+                  <button className="btn btn-ghost btn-block" onClick={session.reRecordA}>
+                    <RotateIcon /> 重新录制玩家 A
+                  </button>
+                </div>
+              )}
+
+              {step === "confirm-b" && (
+                <div>
+                  <button className="btn btn-primary btn-block" onClick={session.confirmB}>
+                    <TargetIcon /> 开始评分分析
+                  </button>
+                  <button className="btn btn-ghost btn-block" onClick={session.reRecordB}>
+                    <RotateIcon /> 重新录制玩家 B
+                  </button>
+                </div>
+              )}
+
+              {step === "analyzing" && (
+                <div className="analyzing-hint">
+                  <SparkIcon />
+                  <span>正在分析动作…</span>
+                </div>
+              )}
+
+              {step === "results" && (
+                <button className="btn btn-primary btn-block" onClick={session.resetSession}>
+                  <RotateIcon /> 新一轮对战
+                </button>
+              )}
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function ArenaResultPanel({
+  score,
+  refusalReason,
+  refusalWarnings,
+  actionA,
+  actionB,
+  onReset,
+}: {
+  score: ArenaScore | null;
+  refusalReason: string | null;
+  refusalWarnings: string[];
+  actionA: GhostAction | null;
+  actionB: GhostAction | null;
+  onReset: () => void;
+}) {
+  const scoringRefused = refusalReason && !score;
+
+  return (
+    <section className="arena-results">
+      <div className="panel-heading">
+        <div>
+          <span className="panel-kicker"><TrophyIcon /> COMPETITION RESULT</span>
+          <h2>竞技结果</h2>
+        </div>
+        {score && (
+          <span className={`signal-pill ${score.overallMatch >= 70 ? "signal-partial" : ""}`}>
+            {score.overallMatch >= 90 ? "EXCELLENT" : score.overallMatch >= 70 ? "GOOD" : score.overallMatch >= 40 ? "FAIR" : "LOW"}
+          </span>
+        )}
+      </div>
+
+      {refusalReason && (
+        <div className={`inline-note ${scoringRefused ? "note-warn" : "note-neutral"}`}>
+          <WarningIcon />
+          <div>
+            <strong>{scoringRefused ? "评分被拒绝" : "质量提示"}</strong>
+            <span>{refusalReason}</span>
+          </div>
+        </div>
+      )}
+
+      {refusalWarnings.length > 0 && (
+        <div className="inline-note note-neutral">
+          <WarningIcon />
+          <span>{refusalWarnings.join("；")}</span>
+        </div>
+      )}
+
+      {score && (
+        <div className="arena-score-grid">
+          <div className="arena-score-main">
+            <span className="score-number">{score.overallMatch}</span>
+            <span className="score-label">综合匹配</span>
+          </div>
+          <div className="arena-score-detail">
+            <div>
+              <span>姿态相似</span>
+              <strong>{score.poseSimilarity}</strong>
+            </div>
+            <div>
+              <span>时间相似</span>
+              <strong>{score.timingSimilarity}</strong>
+            </div>
+            <div>
+              <span>质量门</span>
+              <strong className={score.quality.acceptable ? "text-ok" : "text-warn"}>
+                {score.quality.acceptable ? "通过" : "注意"}
+              </strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {score && score.jointDifferences.length > 0 && (
+        <div className="arena-joints">
+          <h4>关节差异排名</h4>
+          <div className="joint-list">
+            {score.jointDifferences.slice(0, 5).map((j) => (
+              <div key={j.landmarkIndex} className="joint-row">
+                <span className="joint-name">{j.labelZh || `#${j.landmarkIndex}`}</span>
+                <span className="joint-bar">
+                  <span style={{ width: `${Math.min(100, j.meanDistance * 100)}%` }} />
+                </span>
+                <span className="joint-val">{j.meanDistance.toFixed(3)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {score && actionA && actionB && (
+        <div className="arena-meta">
+          <div>
+            <span>参考时长</span>
+            <strong>{formatSeconds(actionA.durationMs)}</strong>
+          </div>
+          <div>
+            <span>复刻时长</span>
+            <strong>{formatSeconds(actionB.durationMs)}</strong>
+          </div>
+          <div>
+            <span>时长差</span>
+            <strong>{formatSeconds(Math.abs(actionA.durationMs - actionB.durationMs))}</strong>
+          </div>
+        </div>
+      )}
+
+      {score && (
+        <div className="arena-explanation">
+          <h4>评分说明</h4>
+          <p>{score.explanation}</p>
+        </div>
+      )}
+
+      <div className="button-row">
+        <button className="btn btn-primary" onClick={onReset}>
+          <RotateIcon /> 新一轮对战
+        </button>
+      </div>
+    </section>
+  );
+}

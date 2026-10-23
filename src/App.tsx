@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { BrandMark } from "./components/BrandMark";
 import {
   CameraIcon,
-  CpuIcon,
   GhostIcon,
   ShieldIcon,
 } from "./components/Icons";
+import { SwordsIcon } from "./components/arena/ArenaIcons";
 import { CapturePage } from "./pages/CapturePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { MotionGhostPage } from "./pages/MotionGhostPage";
+import { MotionArenaPage } from "./pages/MotionArenaPage";
 
-type Route = "dashboard" | "capture" | "ghost";
+type Route = "dashboard" | "capture" | "ghost" | "arena";
 
 function readRoute(): Route {
   if (window.location.hash.startsWith("#/ghost")) return "ghost";
+  if (window.location.hash.startsWith("#/arena")) return "arena";
   if (window.location.hash.startsWith("#/capture")) return "capture";
   return "dashboard";
 }
@@ -36,7 +38,9 @@ export default function App() {
         ? "实时姿态捕捉 · SpineMotion 2.0"
         : route === "ghost"
           ? "Motion Ghost · SpineMotion 2.0"
-          : "SpineMotion 2.0 — Human Motion Lab";
+          : route === "arena"
+            ? "Motion Arena · SpineMotion 2.0"
+            : "SpineMotion 2.0 — Human Motion Lab";
   }, [route]);
 
   return (
@@ -79,11 +83,14 @@ export default function App() {
               <GhostIcon />
               Motion Ghost
             </a>
-            <span className="nav-link nav-disabled" aria-disabled="true">
-              <CpuIcon />
-              Arena
-              <small>PHASE 3</small>
-            </span>
+            <a
+              className={`nav-link ${route === "arena" ? "is-active" : ""}`}
+              href="#/arena"
+              aria-current={route === "arena" ? "page" : undefined}
+            >
+              <SwordsIcon />
+              Motion Arena
+            </a>
           </nav>
 
           <div className="topbar-meta">
@@ -98,10 +105,13 @@ export default function App() {
           <CapturePage />
         ) : route === "ghost" ? (
           <MotionGhostPage />
+        ) : route === "arena" ? (
+          <MotionArenaPage />
         ) : (
           <DashboardPage
             onOpenCapture={() => { window.location.hash = "#/capture"; }}
             onOpenGhost={() => { window.location.hash = "#/ghost"; }}
+            onOpenArena={() => { window.location.hash = "#/arena"; }}
           />
         )}
       </main>
