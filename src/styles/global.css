@@ -302,11 +302,11 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 18px;
   border: 1px solid transparent;
   border-radius: 10px;
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   font-weight: 620;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -318,9 +318,14 @@ select:focus-visible {
     opacity 160ms ease;
 }
 
+.btn:focus-visible {
+  outline: 3px solid rgba(85, 230, 216, 0.5);
+  outline-offset: 2px;
+}
+
 .btn svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
 }
 
 .btn:hover:not(:disabled) {
@@ -385,16 +390,56 @@ select:focus-visible {
 }
 
 .btn-lg {
-  min-height: 50px;
-  padding: 0 22px;
+  min-height: 52px;
+  padding: 0 26px;
   border-radius: 12px;
-  font-size: 0.93rem;
+  font-size: 1rem;
+}
+
+.btn-lg svg {
+  width: 20px;
+  height: 20px;
 }
 
 .btn-sm {
-  min-height: 34px;
-  padding: 0 13px;
-  font-size: 0.76rem;
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 0.8rem;
+}
+
+/* Icon-only buttons (playback transport) */
+.btn-icon {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.btn-icon:hover:not(:disabled) {
+  border-color: rgba(139, 200, 235, 0.4);
+  background: rgba(35, 54, 82, 0.6);
+}
+
+/* Primary playback button: ≥48×48 */
+.btn-play {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #8dfff2 0%, #55e6d8 60%);
+  color: #041311;
+  font-size: 17px;
+  box-shadow: 0 6px 22px rgba(50, 213, 198, 0.3);
+}
+
+.btn-play:hover:not(:disabled) {
+  box-shadow: 0 10px 30px rgba(50, 213, 198, 0.42);
+  transform: translateY(-1px);
 }
 
 .btn-block {
@@ -3898,9 +3943,9 @@ select:focus-visible {
   .countdown-overlay strong {
     font-size: 4.8rem;
   }
+}
 
-  .ghost-notice {
-    .arena-page {
+.arena-page {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0;
@@ -3966,8 +4011,17 @@ select:focus-visible {
 
 .arena-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 0;
+}
+
+/* Results step: collapse the sidebar → full-width comparison area */
+.arena-layout-results {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.arena-layout-results .arena-sidebar {
+  display: none;
 }
 
 .arena-main { min-width: 0; }
@@ -4211,6 +4265,46 @@ select:focus-visible {
 
 /* ── Result page redesign ── */
 
+/* Results container uses a wider max-width + less outer margin so the
+   side-by-side canvases get enough room. */
+.arena-layout-results .arena-main .arena-results,
+.arena-results {
+  max-width: 1360px;
+  margin: 16px auto;
+  width: calc(100% - 32px);
+}
+
+/* Row 1: title + quality status */
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.result-title h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+}
+
+.result-title p {
+  margin: 3px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.result-status-main {
+  font-size: 13px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-secondary);
+}
+
 .result-notice {
   display: flex;
   gap: 10px;
@@ -4242,28 +4336,33 @@ select:focus-visible {
 /* Score hero: big number left, bars right, status chip */
 .result-hero {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 24px;
-  align-items: center;
-  padding: 20px 0 16px;
-  border-bottom: 1px solid var(--border);
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  align-items: stretch;
+  padding: 16px 0;
 }
 
+/* Overall score card: visual center */
 .result-score-big {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 150px;
+  padding: 20px;
+  border: 1px solid rgba(85, 230, 216, 0.22);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(85, 230, 216, 0.14), transparent 60%),
+    var(--surface-secondary);
 }
 
 .result-score-number {
   font-variant-numeric: tabular-nums;
-  font-size: 72px;
+  font-size: 74px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, var(--text) 0%, var(--text-secondary) 60%);
+  background: linear-gradient(180deg, #b8fff8 0%, #55e6d8 48%, #7c8dff 115%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -4272,43 +4371,48 @@ select:focus-visible {
 .result-score-label {
   font-size: 12px;
   color: var(--text-secondary);
-  margin-top: 6px;
-  letter-spacing: 0.1em;
+  margin-top: 8px;
+  letter-spacing: 0.14em;
 }
 
 .result-bars {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 14px;
+  padding: 12px 4px;
 }
 
 .result-bar {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .result-bar-header {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  align-items: baseline;
+  font-size: 13px;
+  color: var(--text-soft);
 }
 
 .result-bar-header strong {
   font-variant-numeric: tabular-nums;
-  font-size: 14px;
+  font-size: 17px;
+  color: var(--text);
 }
 
 .bar-track {
-  height: 8px;
-  border-radius: 4px;
+  height: 10px;
+  border-radius: 5px;
   background: var(--surface-secondary);
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.6s ease;
 }
 
@@ -4328,17 +4432,31 @@ select:focus-visible {
   color: var(--text-secondary);
 }
 
+.status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
 .status-dot-ok { background: #3ddc97; }
 .status-dot-warn { background: #ffa85a; }
 
 .result-summary {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.7;
-  padding: 14px 2px 6px;
-  border-bottom: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 10px 2px 2px;
 }
 
 .result-summary p { margin: 0; }
+
+/* Row 6: difference analysis + duration data side by side */
+.result-detail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 24px;
+  align-items: start;
+  padding: 16px 0;
+}
+
+.result-detail-row .diff-panel {
+  margin-top: 0;
+}
 
 /* Duration cards: three equal cards in a row */
 .duration-cards {
@@ -4410,11 +4528,17 @@ select:focus-visible {
   flex: 0 1 auto;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .result-hero {
     grid-template-columns: 1fr;
     gap: 12px;
     text-align: center;
+  }
+  .result-score-big {
+    padding: 16px;
+  }
+  .result-detail-row {
+    grid-template-columns: 1fr;
   }
   .result-actions {
     flex-direction: column;
@@ -4424,63 +4548,116 @@ select:focus-visible {
   }
 }
 
+@media (max-width: 640px) {
+  .duration-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .duration-card {
+    padding: 10px 6px;
+  }
+}
+
 /* ── Visual Comparison ── */
 
 .visual-compare {
-  margin-top: 24px;
+  margin-top: 16px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   background: var(--surface);
 }
 
+/* Playback toolbar: grouped, clearly separated controls */
 .vc-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--surface-secondary);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
 
+.vc-toolbar .vc-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vc-group-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-right: 2px;
+  user-select: none;
+}
+
+/* Playback cluster */
 .vc-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-width: 120px;
+  gap: 6px;
 }
 
 .vc-time {
   font-family: ui-monospace, monospace;
-  font-size: 12px;
-  min-width: 40px;
+  font-size: 13px;
+  min-width: 48px;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-.vc-middle {
+.vc-scrub-wrap {
   flex: 1;
-  min-width: 80px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
 }
 
 .vc-scrubber {
   width: 100%;
-  height: 4px;
+  height: 6px;
   -webkit-appearance: none;
   appearance: none;
   background: var(--border);
-  border-radius: 2px;
+  border-radius: 3px;
   outline: none;
   cursor: pointer;
 }
 
 .vc-scrubber::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: var(--accent);
+  border: 2px solid #06202e;
   cursor: pointer;
+}
+
+/* Segmented selector buttons (mode/speed/view/overlay) */
+.vc-seg {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 560;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vc-seg:hover {
+  border-color: rgba(139, 200, 235, 0.4);
+  color: var(--text);
+}
+
+.vc-seg.is-on {
+  border-color: rgba(85, 230, 216, 0.45);
+  background: rgba(85, 230, 216, 0.14);
+  color: #8dfff2;
 }
 
 .vc-right {
@@ -4502,17 +4679,18 @@ select:focus-visible {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 12px;
-  gap: 12px;
+  padding: 14px;
+  gap: 14px;
 }
 
 /* Side-by-side is MANDATORY on desktop: two equal columns, never stacked */
 .vc-side {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 14px;
   align-items: stretch;
   min-width: 0;
+  width: 100%;
 }
 
 .vc-canvas-box {
@@ -4520,21 +4698,36 @@ select:focus-visible {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
+/* Canvas keeps a consistent vertical layout; height adapts to viewport via
+   aspect-ratio, safe range 320–420px. CSS owns display size; JS mirrors the
+   backing store to devicePixelRatio. */
 .vc-canvas {
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface-secondary);
   cursor: crosshair;
   max-width: 100%;
   width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 3.6;
   display: block;
+  min-height: 320px;
+  max-height: 420px;
+  object-fit: contain;
 }
 
-/* Extremely narrow screens (phones) only: allow stacking */
-@media (max-width: 560px) {
+.vc-canvas-overlay {
+  aspect-ratio: 16 / 9;
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 0;
+}
+
+/* Only extremely narrow screens (phones) stack the canvases */
+@media (max-width: 700px) {
   .vc-side {
     grid-template-columns: 1fr;
   }

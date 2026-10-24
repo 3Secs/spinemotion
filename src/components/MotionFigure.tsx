@@ -83,18 +83,18 @@ export function MotionFigure() {
         </g>
 
         <g fill="#6f88a8" fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="1.2">
-          <text x="58" y="246">SHOULDER PLANE</text>
-          <text x="276" y="311">SAGITTAL AXIS</text>
-          <text x="58" y="440">SCHEMATIC RIG · NOT LIVE DATA</text>
+          <text x="58" y="246">正面观</text>
+          <text x="268" y="311">侧面轴</text>
+          <text x="58" y="440">示意骨架 · 非实时画面</text>
         </g>
       </svg>
 
       <div className="figure-chip figure-chip-top">
         <span className="chip-dot" />
-        POSE LANDMARKER LITE
+        本地 AI 姿态识别
       </div>
       <div className="figure-chip figure-chip-bottom">
-        <span>33</span> LANDMARKS / 1 TARGET
+        <span>33</span> 个关键点 / 单人
       </div>
     </div>
   );

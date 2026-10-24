@@ -135,7 +135,7 @@ export function MotionArenaPage() {
         })}
       </div>
 
-      <div className="arena-layout">
+      <div className={`arena-layout ${isResults ? "arena-layout-results" : ""}`}>
         <div className="arena-main">
           {/* Camera stage shared across all steps */}
           <CameraStage
@@ -174,7 +174,7 @@ export function MotionArenaPage() {
           )}
         </div>
 
-        <aside className="arena-sidebar">
+        <aside className={`arena-sidebar ${isResults ? "arena-sidebar-hidden" : ""}`}>
           {/* Camera panel */}
           <GhostCameraPanel
             phase={capture.phase}
@@ -369,7 +369,7 @@ export function MotionArenaPage() {
   );
 }
 
-function ArenaResultPanel({
+export function ArenaResultPanel({
   score,
   refusalReason,
   refusalWarnings,
@@ -391,6 +391,18 @@ function ArenaResultPanel({
 
   return (
     <section className="arena-results">
+      {/* Row 1: title + quality status */}
+      <div className="result-header">
+        <div className="result-title">
+          <h2>竞技结果</h2>
+          <p>动作比对报告 · 数据全部来自本地推理</p>
+        </div>
+        <div className="result-status-chip result-status-main">
+          <span className={`status-dot ${score?.quality.acceptable ? "status-dot-ok" : "status-dot-warn"}`} />
+          {score?.quality.acceptable ? "采集质量合格" : "采集质量不足"}
+        </div>
+      </div>
+
       {refusalReason && (
         <div className={`result-notice ${scoringRefused ? "result-notice-warn" : "result-notice-info"}`}>
           <WarningIcon />
@@ -409,101 +421,100 @@ function ArenaResultPanel({
       )}
 
       {score && (
-        <div className="result-hero">
-          <div className="result-score-big">
-            <span className="result-score-number">{score.overallMatch}</span>
-            <span className="result-score-label">综合匹配</span>
-          </div>
-          <div className="result-bars">
-            <div className="result-bar">
-              <div className="result-bar-header">
-                <span>姿态匹配</span>
-                <strong>{score.poseSimilarity}</strong>
-              </div>
-              <div className="bar-track">
-                <div className="bar-fill bar-fill-pose" style={{ width: `${score.poseSimilarity}%` }} />
-              </div>
+        <>
+          {/* Row 2: overall score card + pose/timing bars */}
+          <div className="result-hero">
+            <div className="result-score-big">
+              <span className="result-score-number">{score.overallMatch}</span>
+              <span className="result-score-label">综合匹配分</span>
             </div>
-            <div className="result-bar">
-              <div className="result-bar-header">
-                <span>时间与节律</span>
-                <strong>{score.timingSimilarity}</strong>
+            <div className="result-bars">
+              <div className="result-bar">
+                <div className="result-bar-header">
+                  <span>姿态匹配</span>
+                  <strong>{score.poseSimilarity}</strong>
+                </div>
+                <div className="bar-track">
+                  <div className="bar-fill bar-fill-pose" style={{ width: `${score.poseSimilarity}%` }} />
+                </div>
               </div>
-              <div className="bar-track">
-                <div className="bar-fill bar-fill-timing" style={{ width: `${score.timingSimilarity}%` }} />
+              <div className="result-bar">
+                <div className="result-bar-header">
+                  <span>时间与节律</span>
+                  <strong>{score.timingSimilarity}</strong>
+                </div>
+                <div className="bar-track">
+                  <div className="bar-fill bar-fill-timing" style={{ width: `${score.timingSimilarity}%` }} />
+                </div>
               </div>
+              {actionA && actionB && (
+                <div className="result-summary">
+                  <p>{buildResultSummary(score, actionA, actionB)}</p>
+                </div>
+              )}
             </div>
-            <div className="result-status-chip">
-              <span className={`status-dot ${score.quality.acceptable ? "status-dot-ok" : "status-dot-warn"}`} />
-              {score.quality.acceptable ? "采集质量合格" : "采集质量不足"}
-            </div>
           </div>
-        </div>
-      )}
 
-      {/* 一句话评价 */}
-      {score && actionA && actionB && (
-        <div className="result-summary">
-          <p>{buildResultSummary(score, actionA, actionB)}</p>
-        </div>
-      )}
-
-      {score && actionA && actionB && (
-        <VisualComparison actionA={actionA} actionB={actionB} captureMode={captureMode} />
-      )}
-
-      {score && actionA && actionB && (
-        <DifferencePanel
-          score={score}
-          actionA={actionA}
-          actionB={actionB}
-          progress={pb.progress}
-          selectedJoint={pb.selectedJoint}
-          onSelectJoint={pb.setSelectedJoint}
-          onJumpMs={pb.jumpToMoment}
-        />
-      )}
-
-      {score && actionA && actionB && (
-        <div className="duration-cards">
-          <div className="duration-card">
-            <span className="duration-label">参考动作</span>
-            <strong>{formatSeconds(actionA.durationMs)}</strong>
-          </div>
-          <div className="duration-card">
-            <span className="duration-label">复刻动作</span>
-            <strong>{formatSeconds(actionB.durationMs)}</strong>
-          </div>
-          <div className="duration-card">
-            <span className="duration-label">时间差</span>
-            <strong>{formatSeconds(Math.abs(actionA.durationMs - actionB.durationMs))}</strong>
-          </div>
-        </div>
-      )}
-
-      {score && (
-        <details className="result-tech">
-          <summary>技术详情</summary>
-          <p className="result-tech-text">{score.explanation}</p>
+          {/* Row 3–5: dual canvas + unified controls */}
           {actionA && actionB && (
-            <div className="result-tech-exports">
-              <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResult(buildExportData(score, actionA, actionB))}>
-                📥 导出 JSON
-              </button>
-              <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResultCSV(buildExportData(score, actionA, actionB))}>
-                📊 导出 CSV
-              </button>
-            </div>
+            <VisualComparison actionA={actionA} actionB={actionB} captureMode={captureMode} />
           )}
-        </details>
-      )}
 
-      <div className="result-actions">
-        <button className="btn btn-primary btn-lg" onClick={onReset}>
-          <RotateIcon /> 再来一局
-        </button>
-        <a className="btn btn-ghost" href="#/dashboard">返回首页</a>
-      </div>
+          {/* Row 6: difference analysis + duration side by side */}
+          <div className="result-detail-row">
+            {actionA && actionB && (
+              <DifferencePanel
+                score={score}
+                actionA={actionA}
+                actionB={actionB}
+                progress={pb.progress}
+                selectedJoint={pb.selectedJoint}
+                onSelectJoint={pb.setSelectedJoint}
+                onJumpMs={pb.jumpToMoment}
+              />
+            )}
+            {actionA && actionB && (
+              <div className="duration-cards">
+                <div className="duration-card">
+                  <span className="duration-label">参考动作</span>
+                  <strong>{formatSeconds(actionA.durationMs)}</strong>
+                </div>
+                <div className="duration-card">
+                  <span className="duration-label">复刻动作</span>
+                  <strong>{formatSeconds(actionB.durationMs)}</strong>
+                </div>
+                <div className="duration-card">
+                  <span className="duration-label">时间差</span>
+                  <strong>{formatSeconds(Math.abs(actionA.durationMs - actionB.durationMs))}</strong>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Row 7 (footer): technical details + export + actions */}
+          <details className="result-tech">
+            <summary>技术详情</summary>
+            <p className="result-tech-text">{score.explanation}</p>
+            {actionA && actionB && (
+              <div className="result-tech-exports">
+                <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResult(buildExportData(score, actionA, actionB))}>
+                  📥 导出 JSON
+                </button>
+                <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResultCSV(buildExportData(score, actionA, actionB))}>
+                  📊 导出 CSV
+                </button>
+              </div>
+            )}
+          </details>
+
+          <div className="result-actions">
+            <button className="btn btn-primary btn-lg" onClick={onReset}>
+              <RotateIcon /> 再来一局
+            </button>
+            <a className="btn btn-ghost" href="#/dashboard">返回首页</a>
+          </div>
+        </>
+      )}
     </section>
   );
 }

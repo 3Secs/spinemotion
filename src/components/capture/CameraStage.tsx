@@ -210,7 +210,7 @@ export function CameraStage({
               <span />
               <span />
             </div>
-            <p className="overlay-kicker">INITIALIZING PIPELINE</p>
+            <p className="overlay-kicker">正在初始化</p>
             <h3>正在启动摄像头与本地模型</h3>
             <p className="overlay-copy">
               {modelStatus === "loading"
@@ -229,7 +229,7 @@ export function CameraStage({
             <div className="error-icon">
               <WarningIcon />
             </div>
-            <p className="overlay-kicker">PIPELINE ERROR · {error.code}</p>
+            <p className="overlay-kicker">启动出错 · {error.code}</p>
             <h3>{error.title}</h3>
             <p className="overlay-copy">{error.detail}</p>
             <div className="error-hint">{error.hint}</div>

@@ -90,7 +90,7 @@ export function GhostCameraPanel({
                   ? "模型或推理异常"
                   : "等待启动"}
           </strong>
-          <span>POSE LANDMARKER LITE · LOCAL</span>
+          <span>本地 AI 姿态推理</span>
         </div>
       </div>
 

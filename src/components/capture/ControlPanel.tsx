@@ -103,7 +103,7 @@ export function ControlPanel({
         <span className={`status-dot ${modelStatus === "ready" ? "status-dot-live" : modelStatus === "error" ? "status-dot-error" : ""}`} />
         <div>
           <strong>{modelLabel(modelStatus, delegateInfo.active)}</strong>
-          <span>POSE LANDMARKER LITE · LOCAL</span>
+          <span>本地 AI 姿态推理</span>
         </div>
       </div>
 
