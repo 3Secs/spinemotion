@@ -13,7 +13,7 @@ import {
   WarningIcon,
 } from "../components/Icons";
 import { UserIcon, SwordsIcon, TargetIcon } from "../components/arena/ArenaIcons";
-import { GHOST_CONFIG } from "../config/constants";
+import { CAPTURE_CONFIG, GHOST_CONFIG } from "../config/constants";
 import { useArenaSession } from "../hooks/useArenaSession";
 import { assessCaptureReadiness } from "../lib/pose";
 import type { ArenaScore } from "../types/arena";
@@ -135,47 +135,9 @@ export function MotionArenaPage() {
         })}
       </div>
 
-      <div className={`arena-layout ${isResults ? "arena-layout-results" : ""}`}>
-        <div className="arena-main">
-          {/* Camera stage shared across all steps */}
-          <CameraStage
-            videoRef={capture.videoRef}
-            canvasRef={capture.canvasRef}
-            systemOverlay={systemOverlay}
-            phase={capture.phase}
-            modelStatus={capture.modelStatus}
-            error={capture.error}
-            metrics={capture.metrics}
-            live={capture.live}
-            videoSize={capture.videoSize}
-            delegateInfo={capture.delegateInfo}
-            captureMode={session.captureMode}
-            readiness={readiness}
-            showSkeleton={showSkeleton}
-            showGrid={showGrid}
-            onToggleSkeleton={() => setShowSkeleton((v) => !v)}
-            onToggleGrid={() => setShowGrid((v) => !v)}
-            onStart={capture.start}
-            onResume={capture.resume}
-            onStop={capture.stop}
-          />
-
-          {/* Results panel */}
-          {isResults && (
-            <ArenaResultPanel
-              score={score}
-              refusalReason={refusalReason}
-              refusalWarnings={refusalWarnings}
-              actionA={actionA}
-              actionB={actionB}
-              captureMode={session.captureMode}
-              onReset={session.resetSession}
-            />
-          )}
-        </div>
-
-        <aside className={`arena-sidebar ${isResults ? "arena-sidebar-hidden" : ""}`}>
-          {/* Camera panel */}
+      {/* TopControls — 原侧边栏功能卡片，全部移到摄像头上方，响应式 Grid 自动换行 */}
+      <div className="arena-top-controls">
+        <div className="arena-top-card arena-top-card-camera">
           <GhostCameraPanel
             phase={capture.phase}
             modelStatus={capture.modelStatus}
@@ -193,9 +155,12 @@ export function MotionArenaPage() {
             onRefreshDevices={() => { void capture.refreshDevices(); }}
             onSelectDevice={capture.selectDevice}
             onCaptureModeChange={session.setCaptureMode}
+            compact
           />
+        </div>
 
-          {/* Score mode selector */}
+        {/* Score mode selector */}
+        <div className="arena-top-card arena-top-card-score">
           <section className="panel">
             <div className="panel-heading">
               <div>
@@ -224,9 +189,26 @@ export function MotionArenaPage() {
                 ? "末端关节降权，分数更友好。"
                 : "原始测量指标，严格评分。"}
             </p>
+            <ul className="mode-points">
+              {session.scoreMode === "casual" ? (
+                <>
+                  <li>适合朋友之间娱乐对战</li>
+                  <li>末端关节权重下调，更宽容</li>
+                  <li>得分集中在 60–95 区间</li>
+                </>
+              ) : (
+                <>
+                  <li>接近教练级动作评估</li>
+                  <li>全身关键点一视同仁</li>
+                  <li>姿态与节律严格计分</li>
+                </>
+              )}
+            </ul>
           </section>
+        </div>
 
-          {/* Duration selector */}
+        {/* Duration selector */}
+        <div className="arena-top-card arena-top-card-duration">
           <section className="panel">
             <div className="panel-heading">
               <div>
@@ -249,9 +231,19 @@ export function MotionArenaPage() {
               <span>{session.durationSec}s</span>
               <span>15s</span>
             </div>
+            <p className="duration-hint">
+              动作速度固定，时长越长单帧细节越多；建议 8–12 秒保证动作完整。
+            </p>
+            <ul className="mode-points">
+              <li>以 {CAPTURE_CONFIG.defaultTargetFps}fps 采样全部帧</li>
+              <li>两段动作自动做时间对齐</li>
+              <li>回放可 0.5×–1.5× 调速对比</li>
+            </ul>
           </section>
+        </div>
 
-          {/* Player status */}
+        {/* Player status */}
+        <div className="arena-top-card arena-top-card-players">
           <section className="panel">
             <div className="panel-heading">
               <div>
@@ -275,9 +267,16 @@ export function MotionArenaPage() {
                 </div>
               </div>
             </div>
+            <ol className="player-steps">
+              <li>玩家 A 先录制参考动作</li>
+              <li>玩家 B 观看回放后复刻</li>
+              <li>评分自动比对两人节律</li>
+            </ol>
           </section>
+        </div>
 
-          {/* Action buttons based on step */}
+        {/* Action buttons — 独占一行，保持醒目可点 */}
+        <div className="arena-top-card arena-top-card-actions">
           <section className="panel">
             <div className="panel-heading">
               <div>
@@ -348,22 +347,63 @@ export function MotionArenaPage() {
               )}
             </div>
           </section>
+        </div>
+      </div>
 
-          {/* Diagnostics */}
-          <DiagnosticsPanel
-            actionA={actionA}
-            actionB={actionB}
+      {/* MainCamera — 独占整行，位于顶部控制区下方 */}
+      <div className="arena-camera-main">
+        {/* Camera stage shared across all steps */}
+        <CameraStage
+          videoRef={capture.videoRef}
+          canvasRef={capture.canvasRef}
+          systemOverlay={systemOverlay}
+          phase={capture.phase}
+          modelStatus={capture.modelStatus}
+          error={capture.error}
+          metrics={capture.metrics}
+          live={capture.live}
+          videoSize={capture.videoSize}
+          delegateInfo={capture.delegateInfo}
+          captureMode={session.captureMode}
+          readiness={readiness}
+          showSkeleton={showSkeleton}
+          showGrid={showGrid}
+          onToggleSkeleton={() => setShowSkeleton((v) => !v)}
+          onToggleGrid={() => setShowGrid((v) => !v)}
+          onStart={capture.start}
+          onResume={capture.resume}
+          onStop={capture.stop}
+        />
+      </div>
+
+      {/* Diagnostics */}
+      <DiagnosticsPanel
+        actionA={actionA}
+        actionB={actionB}
+        score={score}
+        scoreMode={session.scoreMode}
+        captureMode={session.captureMode}
+        durationSec={session.durationSec}
+        recordingElapsedMs={session.recordingElapsedMs}
+        recordingFrameCount={session.recordingFrameCount}
+        recordingValidFrames={session.recordingValidFrames}
+        refusalReason={refusalReason}
+        refusalWarnings={refusalWarnings}
+      />
+
+      {/* ArenaResults — 完整宽度独立区域，评分后出现 */}
+      <div className="arena-results-main">
+        {isResults && (
+          <ArenaResultPanel
             score={score}
-            scoreMode={session.scoreMode}
-            captureMode={session.captureMode}
-            durationSec={session.durationSec}
-            recordingElapsedMs={session.recordingElapsedMs}
-            recordingFrameCount={session.recordingFrameCount}
-            recordingValidFrames={session.recordingValidFrames}
             refusalReason={refusalReason}
             refusalWarnings={refusalWarnings}
+            actionA={actionA}
+            actionB={actionB}
+            captureMode={session.captureMode}
+            onReset={session.resetSession}
           />
-        </aside>
+        )}
       </div>
     </div>
   );

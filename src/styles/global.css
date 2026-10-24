@@ -4009,31 +4009,117 @@ select:focus-visible {
   color: var(--text-secondary);
 }
 
-.arena-layout {
+/* ── Arena 三段式布局：顶部控制 / 中间摄像头 / 底部结果 ── */
+
+/* 顶部控制区：四张功能卡严格等宽且等高（内容设计饱满，不靠留白填充） */
+.arena-top-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  padding: 16px 16px 0;
 }
 
-/* Results step: collapse the sidebar → full-width comparison area */
-.arena-layout-results {
-  grid-template-columns: minmax(0, 1fr);
+.arena-top-card {
+  min-width: 0;
+  display: flex;
 }
 
-.arena-layout-results .arena-sidebar {
-  display: none;
-}
-
-.arena-main { min-width: 0; }
-
-.arena-sidebar {
-  padding: 16px;
+.arena-top-card > .panel,
+.arena-top-card > .ghost-camera-panel {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-left: 1px solid var(--border);
-  overflow-y: auto;
-  max-height: calc(100vh - 250px);
+}
+
+/* Arena 顶部摄像头卡紧凑化：压缩内部间距，减少与其它卡的高度差 */
+.arena-top-card-camera > .ghost-camera-panel {
+  padding: 18px;
+}
+
+.arena-top-card-camera .ghost-camera-panel .model-row {
+  margin-bottom: 10px;
+}
+
+.arena-top-card-camera .ghost-camera-panel .mode-block {
+  margin-bottom: 10px;
+}
+
+.arena-top-card-camera .ghost-camera-panel .device-block {
+  margin-bottom: 10px;
+}
+
+.arena-top-card-camera .ghost-camera-panel .mode-option {
+  padding: 7px 9px;
+}
+
+.arena-top-card-camera .ghost-camera-panel .mode-option span {
+  font-size: 0.48rem;
+}
+
+.arena-top-card-camera .ghost-camera-panel .control-actions {
+  margin-bottom: 0;
+}
+
+/* 操作卡片独占一行，不被其他卡片压缩 */
+.arena-top-card-actions {
+  grid-column: 1 / -1;
+}
+
+.arena-top-card-actions .control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.arena-top-card-actions .control-actions > .btn,
+.arena-top-card-actions .control-actions > div {
+  min-width: min(100%, 240px);
+  flex: 1 1 240px;
+}
+
+/* 中屏：四列 → 两列各两行 */
+@media (max-width: 1120px) {
+  .arena-top-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 窄屏：全部单列，操作卡仍独占一行 */
+@media (max-width: 620px) {
+  .arena-top-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 中间摄像头区：独占整行 */
+.arena-camera-main {
+  min-width: 0;
+  width: 100%;
+  padding: 16px;
+}
+
+.arena-camera-main .camera-card {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* 大屏时限制摄像头显示高度，避免过高；宽高比由内联 aspect-ratio 维持 */
+.arena-camera-main .camera-stage {
+  max-height: 68vh;
+}
+
+/* 底部结果区：完整宽度独立区域，不受顶部 Grid 约束 */
+.arena-results-main {
+  min-width: 0;
+  width: 100%;
+}
+
+/* 摄像头区与结果区共用页面内边距节奏 */
+.arena-page > .arena-camera-main + .arena-results-main {
+  margin-top: 0;
 }
 
 /* Results */
@@ -4241,11 +4327,6 @@ select:focus-visible {
   white-space: pre-line;
 }
 
-@media (max-width: 860px) {
-  .arena-layout { grid-template-columns: 1fr; }
-  .arena-sidebar { max-height: none; border-left: none; border-top: 1px solid var(--border); }
-}
-
 .mode-switch-row {
   display: flex;
   gap: 6px;
@@ -4263,11 +4344,72 @@ select:focus-visible {
   margin-top: 6px;
 }
 
+/* 顶部控制卡补充内容样式 */
+.mode-points {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mode-points li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.mode-points li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.duration-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.player-steps {
+  margin: 12px 0 0;
+  padding: 10px 12px 10px 28px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.player-steps li {
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+
+.player-steps li::marker {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 /* ── Result page redesign ── */
 
 /* Results container uses a wider max-width + less outer margin so the
    side-by-side canvases get enough room. */
-.arena-layout-results .arena-main .arena-results,
 .arena-results {
   max-width: 1360px;
   margin: 16px auto;

@@ -34,6 +34,8 @@ interface GhostCameraPanelProps {
   onRefreshDevices: () => void;
   onSelectDevice: (deviceId: string) => void;
   onCaptureModeChange: (mode: CaptureMode) => void;
+  /** 紧凑模式：隐藏次要指标与长提示，用于 Arena 页顶部卡片 */
+  compact?: boolean;
 }
 
 export function GhostCameraPanel({
@@ -53,6 +55,7 @@ export function GhostCameraPanel({
   onRefreshDevices,
   onSelectDevice,
   onCaptureModeChange,
+  compact = false,
 }: GhostCameraPanelProps) {
   const active = phase === "starting" || phase === "running" || phase === "paused";
   const running = phase === "running";
@@ -116,7 +119,7 @@ export function GhostCameraPanel({
             );
           })}
         </div>
-        <p className="mode-rule">{modeDefinition.rule}</p>
+        {!compact && <p className="mode-rule">{modeDefinition.rule}</p>}
       </div>
 
       <div className="settings-block device-block">
@@ -148,22 +151,28 @@ export function GhostCameraPanel({
           ))}
         </select>
         <span className="device-hint">
-          {active
-            ? "停止摄像头后可切换设备。"
-            : devicesLoading
-              ? "正在读取视频输入设备…"
-              : cameraDevices.length > 0
-                ? `${cameraDevices.length} 个视频输入 · 内置 / 连续互通 / USB`
-                : "首次授权后显示设备名称。"}
+          {compact
+            ? cameraDevices.length > 0
+              ? `${cameraDevices.length} 个视频输入`
+              : "首次授权后显示设备名称"
+            : active
+              ? "停止摄像头后可切换设备。"
+              : devicesLoading
+                ? "正在读取视频输入设备…"
+                : cameraDevices.length > 0
+                  ? `${cameraDevices.length} 个视频输入 · 内置 / 连续互通 / USB`
+                  : "首次授权后显示设备名称。"}
         </span>
         {devicesError && <span className="device-error">{devicesError}</span>}
       </div>
 
-      <div className="ghost-mini-metrics">
-        <span><strong>{running && metrics.frames > 0 ? metrics.fps.toFixed(1) : "—"}</strong> FPS</span>
-        <span><strong>{running && metrics.frames > 0 ? metrics.inferenceMs.toFixed(1) : "—"}</strong> ms</span>
-        <span><strong>{source}</strong> 源画面</span>
-      </div>
+      {!compact && (
+        <div className="ghost-mini-metrics">
+          <span><strong>{running && metrics.frames > 0 ? metrics.fps.toFixed(1) : "—"}</strong> FPS</span>
+          <span><strong>{running && metrics.frames > 0 ? metrics.inferenceMs.toFixed(1) : "—"}</strong> ms</span>
+          <span><strong>{source}</strong> 源画面</span>
+        </div>
+      )}
 
       <div className="control-actions">
         {canStart && (
@@ -184,13 +193,15 @@ export function GhostCameraPanel({
         )}
       </div>
 
-      <div className="control-footnote">
-        <InfoIcon />
-        <span>
-          Motion Ghost 只改变所需关键点和 Ghost 对齐，不裁切或放大原始摄像头画面。
-          {locked ? " 当前录制/倒计时期间摄像头控制已锁定。" : ""}
-        </span>
-      </div>
+      {!compact && (
+        <div className="control-footnote">
+          <InfoIcon />
+          <span>
+            Motion Ghost 只改变所需关键点和 Ghost 对齐，不裁切或放大原始摄像头画面。
+            {locked ? " 当前录制/倒计时期间摄像头控制已锁定。" : ""}
+          </span>
+        </div>
+      )}
     </section>
   );
 }
