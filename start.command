@@ -1,5 +1,5 @@
 #!/bin/bash
-# SpineMotion 2.0 — one-click local launcher for macOS.
+# SpineMotion — one-click local launcher for macOS.
 # Starts the Vite dev server and opens the exact local URL in Chrome.
 
 set -u
@@ -46,7 +46,7 @@ if [ ! -f "public/models/pose_landmarker_lite.task" ]; then
 fi
 
 echo ""
-echo "SpineMotion 2.0 / Phase 1"
+echo "SpineMotion — 本地人体运动实验室"
 echo "本地地址：$URL"
 echo "摄像头和模型都只在本机运行。按 Control+C 可停止服务器。"
 echo ""

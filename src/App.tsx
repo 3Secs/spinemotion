@@ -35,12 +35,12 @@ export default function App() {
   useEffect(() => {
     document.title =
       route === "capture"
-        ? "实时姿态捕捉 · SpineMotion 2.0"
+        ? "实时姿态捕捉 · SpineMotion"
         : route === "ghost"
-          ? "Motion Ghost · SpineMotion 2.0"
+          ? "Motion Ghost · SpineMotion"
           : route === "arena"
-            ? "Motion Arena · SpineMotion 2.0"
-            : "SpineMotion 2.0 — Human Motion Lab";
+            ? "Motion Arena · SpineMotion"
+            : "SpineMotion — Human Motion Lab";
   }, [route]);
 
   return (

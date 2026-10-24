@@ -54,7 +54,7 @@ export interface GhostAction {
   name: string;
   createdAt: string;
   mode: CaptureMode;
-  /** Whether the recorded display was mirrored. Phase 1/2 display is unmirrored. */
+  /** Whether the recorded display was mirrored (recorded display is unmirrored). */
   mirrored: boolean;
   durationMs: number;
   capture: GhostCaptureInfo;

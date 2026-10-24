@@ -1,14 +1,14 @@
 import type { CaptureMode } from "../types/pose";
 
 /**
- * Engineering configuration for SpineMotion 2.0.
+ * Engineering configuration for SpineMotion.
  *
  * IMPORTANT: every threshold below is an engineering heuristic chosen for a
  * browser demo. None of them is a clinically validated cut-off. They live in
  * one place so the research team can review and tune them explicitly.
  */
 
-export const APP_NAME = "SpineMotion 2.0";
+export const APP_NAME = "SpineMotion";
 export const APP_SUBTITLE = "Interactive & Trustworthy Human Motion Lab";
 
 export const CAPTURE_CONFIG = {

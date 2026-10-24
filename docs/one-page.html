@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SpineMotion — Your Moves. Your Challenge.</title>
+<style>
+  :root {
+    --bg: #060a12;
+    --panel: #0c1422;
+    --line: #1c2a3d;
+    --text: #e6eef7;
+    --muted: #8ba0b8;
+    --dim: #5c7189;
+    --cyan: #47d7ff;
+    --mint: #55e6d8;
+    --amber: #ffa85a;
+    --gold: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    line-height: 1.6;
+    padding: 0 0 48px;
+  }
+  .page { max-width: 1080px; margin: 0 auto; padding: 56px 32px 0; }
+
+  /* ── Hero ── */
+  .hero { text-align: center; padding: 48px 0 40px; }
+  .hero .mark {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 13px; letter-spacing: 0.35em; color: var(--mint);
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .hero .mark::before, .hero .mark::after {
+    content: ""; width: 34px; height: 1px; background: var(--line);
+  }
+  .hero h1 {
+    font-size: clamp(40px, 7vw, 68px);
+    font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+    background: linear-gradient(120deg, #ffffff 20%, var(--cyan) 55%, var(--mint) 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .tag {
+    font-size: clamp(15px, 2.4vw, 20px);
+    color: var(--muted); margin-top: 14px; letter-spacing: 0.08em;
+  }
+  .hero .oneliner {
+    max-width: 640px; margin: 18px auto 0;
+    font-size: 15px; color: var(--muted);
+  }
+
+  /* ── Sections ── */
+  section { margin-top: 56px; }
+  .sec-label {
+    display: block; font-size: 12px; letter-spacing: 0.3em;
+    color: var(--cyan); text-transform: uppercase; margin-bottom: 8px;
+  }
+  h2 {
+    font-size: clamp(24px, 3.4vw, 32px); font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 18px;
+  }
+  p.body { color: var(--muted); font-size: 15px; max-width: 720px; }
+
+  /* ── 3 Experience cards ── */
+  .xp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
+  .xp-card {
+    background: linear-gradient(150deg, rgba(18,30,50,0.85), rgba(9,16,28,0.9));
+    border: 1px solid var(--line); border-radius: 16px; padding: 24px 20px;
+  }
+  .xp-card .num {
+    font-size: 12px; letter-spacing: 0.25em; color: var(--amber); font-weight: 700;
+  }
+  .xp-card h3 { font-size: 19px; margin: 8px 0 10px; }
+  .xp-card p { font-size: 13px; color: var(--muted); }
+  .xp-card em { font-style: normal; color: var(--gold); font-weight: 600; }
+
+  /* ── Features ── */
+  .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 4px; }
+  .feat-list li {
+    list-style: none; position: relative; padding-left: 22px;
+    font-size: 14px; color: var(--muted);
+  }
+  .feat-list li::before {
+    content: "◆"; position: absolute; left: 0; top: 0;
+    color: var(--mint); font-size: 11px;
+  }
+
+  /* ── Stack ── */
+  .stack-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .chip {
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,0.02);
+  }
+  .chip b { color: var(--cyan); font-weight: 600; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+    font-size: 12px; color: var(--dim);
+  }
+  .footer .note { color: var(--amber); }
+
+  @media (max-width: 760px) {
+    .xp-grid, .feat-list { grid-template-columns: 1fr; }
+    .page { padding: 36px 20px 0; }
+  }
+  @media print {
+    body { padding: 0; }
+    .page { max-width: 100%; padding: 24px 20px 0; }
+    section { margin-top: 32px; page-break-inside: avoid; }
+    .hero { padding: 24px 0 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero -->
+  <header class="hero">
+    <span class="mark">Course · Challenge · Compare</span>
+    <h1>SpineMotion</h1>
+    <div class="tag">Your Moves. Your Challenge.</div>
+    <p class="oneliner">
+      在浏览器里记录你的动作，邀请朋友复刻，让本地 AI 解释你们有多默契——全程不上传视频。
+    </p>
+  </header>
+
+  <!-- 问题与场景 -->
+  <section>
+    <span class="sec-label">Scenario</span>
+    <h2>为什么做这个？</h2>
+    <p class="body">
+      运动对比通常依赖教练的人眼和经验，视频对比工具又往往只做"并排播放"，无法回答
+      <b style="color:var(--text)">"哪里不像、差多少、在哪个瞬间"</b>。
+      SpineMotion 把姿态捕捉、时序对齐与可解释评分放进一个本地网页，
+      让"学动作、比动作、复盘动作"变成一场即时、公平、有趣的对战。
+    </p>
+  </section>
+
+  <!-- 三个核心体验 -->
+  <section>
+    <span class="sec-label">Experience</span>
+    <h2>三个核心体验</h2>
+    <div class="xp-grid">
+      <div class="xp-card">
+        <span class="num">01</span>
+        <h3>Capture · 记录</h3>
+        <p>MediaPipe 33 点骨架实时捕捉，头肩髋膝踝完整入镜检测，5–15 秒一次干净录制，自动质量把关。</p>
+      </div>
+      <div class="xp-card">
+        <span class="num">02</span>
+        <h3>Challenge · 复刻</h3>
+        <p>玩家 A 记录参考动作，玩家 B 观看回放后复刻。DTW 自动对齐两段时间轴，消除速度快慢带来的误判。</p>
+      </div>
+      <div class="xp-card">
+        <span class="num">03</span>
+        <h3>Explain · 解释</h3>
+        <p>双骨架并排 / 重叠回放、关节差异中文排名、差异时段时间轴跳转，以及自然语言评分总结与 JSON / CSV 导出。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 产品创新点 -->
+  <section>
+    <span class="sec-label">Innovation</span>
+    <h2>产品创新点</h2>
+    <ul class="feat-list">
+      <li><b style="color:var(--text)">尺度无关的公平比对：</b>髋部锚点 + 肩宽归一化，站位远近不影响分数</li>
+      <li><b style="color:var(--text)">时序动态对齐：</b>DTW 而非逐帧硬对齐，允许合理速度差异</li>
+      <li><b style="color:var(--text)">可解释评分：</b>娱乐 / 研究双模式，给出"哪里不像"而非一个神秘数字</li>
+      <li><b style="color:var(--text)">纯本地隐私：</b>不上传视频，断网可运行，无云端依赖</li>
+      <li><b style="color:var(--text)">双人竞技化：</b>用挑战与默契把枯燥的形态对比变成游戏</li>
+      <li><b style="color:var(--text)">零成本演示：</b>一台 Mac + Chrome 即完整演示环境</li>
+    </ul>
+  </section>
+
+  <!-- 技术架构 -->
+  <section>
+    <span class="sec-label">Architecture</span>
+    <h2>技术架构</h2>
+    <p class="body" style="margin-bottom:14px">
+      纯前端本地架构：浏览器摄像头帧 → MediaPipe Pose Landmarker（WASM / GPU）→
+      关键点轨迹录制 → DTW 对齐与尺度归一化 → 可解释评分引擎 → Canvas 双骨架回放。
+      无后端服务，无数据库，无用户账户。
+    </p>
+    <div class="stack-row">
+      <span class="chip">React 19 + <b>TypeScript</b></span>
+      <span class="chip"><b>MediaPipe</b> Pose Landmarker Lite</span>
+      <span class="chip"><b>DTW</b> 时间对齐</span>
+      <span class="chip"><b>Vite</b> 构建</span>
+      <span class="chip"><b>Vitest</b> 测试</span>
+      <span class="chip">本地 <b>WASM</b> 推理</span>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>MoonStone DreamUp · 本地可运行 Demo</span>
+    <span class="note">非医疗器械 · 不提供临床诊断 · 运动分析结果仅作展示参考</span>
+  </footer>
+
+</div>
+</body>
+</html>
