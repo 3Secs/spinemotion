@@ -7,3 +7,4 @@ coverage/
 *.local
 *.log
 pnpm-lock.yaml
+.Rhistory

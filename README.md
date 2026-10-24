@@ -157,4 +157,4 @@ npm run preview      # 预览生产构建 → http://127.0.0.1:4173
 -算法 / 工程：Niko
 -设计 / 交互：Mako
 
-**MoonStone DreamUp · 提交材料清单：README / 代码仓库 / 本地 Demo / 一页作品介绍（docs/one-page.html）**
+**MoonStone DreamUp · 提交材料清单：README / 代码仓库 / 本地 Demo / 一页作品介绍（docs/作品.html）**
