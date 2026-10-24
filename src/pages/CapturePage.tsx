@@ -45,7 +45,7 @@ export function CapturePage() {
         <div>
           <div className="eyebrow">
             <span className="eyebrow-line" />
-            PHASE 1 · POSE CAPTURE ENGINE
+            实时姿态捕捉
           </div>
           <h1>实时姿态捕捉</h1>
           <p>
@@ -93,7 +93,7 @@ export function CapturePage() {
             <section className="panel method-panel">
               <div className="panel-kicker">
                 <InfoIcon />
-                PIPELINE NOTES
+                技术说明
               </div>
               <h2>这一版实际做了什么</h2>
               <ul className="method-list">
@@ -182,11 +182,11 @@ export function CapturePage() {
           <section className="panel privacy-panel">
             <div className="panel-kicker">
               <ShieldIcon />
-              LOCAL PROCESSING
+              本地处理
             </div>
             <h2>画面不离开本机</h2>
             <p>
-              Phase 1 不录制视频、不写 IndexedDB、不上传服务器。关闭摄像头后，
+              本页不录制视频、不写 IndexedDB、不上传服务器。关闭摄像头后，
               MediaStream 轨道会立即停止。
             </p>
             <div className="privacy-diagram" aria-hidden="true">
@@ -205,7 +205,7 @@ export function CapturePage() {
           <section className="panel troubleshoot-panel">
             <div className="panel-kicker">
               <InfoIcon />
-              TROUBLESHOOTING
+              现场排查
             </div>
             <h2>现场排查</h2>
             <ol>

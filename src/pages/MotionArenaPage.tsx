@@ -12,7 +12,7 @@ import {
   StopIcon,
   WarningIcon,
 } from "../components/Icons";
-import { TrophyIcon, UserIcon, SwordsIcon, TargetIcon } from "../components/arena/ArenaIcons";
+import { UserIcon, SwordsIcon, TargetIcon } from "../components/arena/ArenaIcons";
 import { GHOST_CONFIG } from "../config/constants";
 import { useArenaSession } from "../hooks/useArenaSession";
 import { assessCaptureReadiness } from "../lib/pose";
@@ -56,7 +56,7 @@ export function MotionArenaPage() {
     <>
       {countdown !== null && (
         <div className="countdown-overlay">
-          <span className="countdown-kicker">RECORDING IN</span>
+          <span className="countdown-kicker">即将开始录制</span>
           <strong>{countdown}</strong>
           <span>准备录制 · 让身体完整进入画面</span>
         </div>
@@ -77,7 +77,7 @@ export function MotionArenaPage() {
         <div>
           <div className="eyebrow">
             <span className="eyebrow-line" />
-            PHASE 3 · MOTION ARENA
+            双人动作竞技
           </div>
           <h1>动作复刻竞技场</h1>
           <p>
@@ -86,9 +86,9 @@ export function MotionArenaPage() {
           </p>
         </div>
         <div className="heading-chips">
-          <span className="heading-chip"><SwordsIcon /> HEAD-TO-HEAD</span>
-          <span className="heading-chip"><TargetIcon /> DTW ALIGNMENT</span>
-          <span className="heading-chip"><ShieldIcon /> LOCAL SCORING</span>
+          <span className="heading-chip"><SwordsIcon /> 两人对战</span>
+          <span className="heading-chip"><TargetIcon /> 时间对齐</span>
+          <span className="heading-chip"><ShieldIcon /> 本地评分</span>
         </div>
       </header>
 
@@ -199,7 +199,7 @@ export function MotionArenaPage() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="panel-kicker"><TargetIcon /> SCORE MODE</span>
+                <span className="panel-kicker"><TargetIcon /> 评分模式</span>
                 <h2>评分模式</h2>
               </div>
             </div>
@@ -230,7 +230,7 @@ export function MotionArenaPage() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="panel-kicker"><ClockIcon /> DURATION</span>
+                <span className="panel-kicker"><ClockIcon /> 录制时长</span>
                 <h2>录制时长</h2>
               </div>
             </div>
@@ -255,7 +255,7 @@ export function MotionArenaPage() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="panel-kicker"><UserIcon /> PLAYERS</span>
+                <span className="panel-kicker"><UserIcon /> 玩家</span>
                 <h2>选手状态</h2>
               </div>
             </div>
@@ -281,7 +281,7 @@ export function MotionArenaPage() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="panel-kicker"><SwordsIcon /> ACTIONS</span>
+                <span className="panel-kicker"><SwordsIcon /> 操作</span>
                 <h2>操作</h2>
               </div>
             </div>
@@ -391,20 +391,8 @@ function ArenaResultPanel({
 
   return (
     <section className="arena-results">
-      <div className="panel-heading">
-        <div>
-          <span className="panel-kicker"><TrophyIcon /> COMPETITION RESULT</span>
-          <h2>竞技结果</h2>
-        </div>
-        {score && (
-          <span className={`signal-pill ${score.overallMatch >= 70 ? "signal-partial" : ""}`}>
-            {score.overallMatch >= 90 ? "EXCELLENT" : score.overallMatch >= 70 ? "GOOD" : score.overallMatch >= 40 ? "FAIR" : "LOW"}
-          </span>
-        )}
-      </div>
-
       {refusalReason && (
-        <div className={`inline-note ${scoringRefused ? "note-warn" : "note-neutral"}`}>
+        <div className={`result-notice ${scoringRefused ? "result-notice-warn" : "result-notice-info"}`}>
           <WarningIcon />
           <div>
             <strong>{scoringRefused ? "评分被拒绝" : "质量提示"}</strong>
@@ -413,59 +401,50 @@ function ArenaResultPanel({
         </div>
       )}
 
-      {refusalWarnings.length > 0 && (
-        <div className="inline-note note-neutral">
+      {refusalWarnings.length > 0 && !scoringRefused && (
+        <div className="result-notice result-notice-info">
           <WarningIcon />
           <span>{refusalWarnings.join("；")}</span>
         </div>
       )}
 
       {score && (
-        <div className="arena-score-grid">
-          <div className="arena-score-main">
-            <span className="score-number">{score.overallMatch}</span>
-            <span className="score-label">综合匹配</span>
+        <div className="result-hero">
+          <div className="result-score-big">
+            <span className="result-score-number">{score.overallMatch}</span>
+            <span className="result-score-label">综合匹配</span>
           </div>
-          <div className="arena-score-detail">
-            <div>
-              <span>姿态相似</span>
-              <strong>{score.poseSimilarity}</strong>
-            </div>
-            <div>
-              <span>时间相似</span>
-              <strong>{score.timingSimilarity}</strong>
-            </div>
-            <div>
-              <span>质量门</span>
-              <strong className={score.quality.acceptable ? "text-ok" : "text-warn"}>
-                {score.quality.acceptable ? "通过" : "注意"}
-              </strong>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Natural-language summary */}
-      {score && actionA && actionB && (
-        <div className="arena-summary">
-          <p>{buildResultSummary(score, actionA, actionB)}</p>
-        </div>
-      )}
-
-      {score && score.jointDifferences.length > 0 && (
-        <div className="arena-joints">
-          <h4>关节差异排名</h4>
-          <div className="joint-list">
-            {score.jointDifferences.slice(0, 5).map((j) => (
-              <div key={j.landmarkIndex} className="joint-row">
-                <span className="joint-name">{j.labelZh || `#${j.landmarkIndex}`}</span>
-                <span className="joint-bar">
-                  <span style={{ width: `${Math.min(100, j.meanDistance * 100)}%` }} />
-                </span>
-                <span className="joint-val">{j.meanDistance.toFixed(3)}</span>
+          <div className="result-bars">
+            <div className="result-bar">
+              <div className="result-bar-header">
+                <span>姿态匹配</span>
+                <strong>{score.poseSimilarity}</strong>
               </div>
-            ))}
+              <div className="bar-track">
+                <div className="bar-fill bar-fill-pose" style={{ width: `${score.poseSimilarity}%` }} />
+              </div>
+            </div>
+            <div className="result-bar">
+              <div className="result-bar-header">
+                <span>时间与节律</span>
+                <strong>{score.timingSimilarity}</strong>
+              </div>
+              <div className="bar-track">
+                <div className="bar-fill bar-fill-timing" style={{ width: `${score.timingSimilarity}%` }} />
+              </div>
+            </div>
+            <div className="result-status-chip">
+              <span className={`status-dot ${score.quality.acceptable ? "status-dot-ok" : "status-dot-warn"}`} />
+              {score.quality.acceptable ? "采集质量合格" : "采集质量不足"}
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* 一句话评价 */}
+      {score && actionA && actionB && (
+        <div className="result-summary">
+          <p>{buildResultSummary(score, actionA, actionB)}</p>
         </div>
       )}
 
@@ -486,44 +465,44 @@ function ArenaResultPanel({
       )}
 
       {score && actionA && actionB && (
-        <div className="arena-meta">
-          <div>
-            <span>参考时长</span>
+        <div className="duration-cards">
+          <div className="duration-card">
+            <span className="duration-label">参考动作</span>
             <strong>{formatSeconds(actionA.durationMs)}</strong>
           </div>
-          <div>
-            <span>复刻时长</span>
+          <div className="duration-card">
+            <span className="duration-label">复刻动作</span>
             <strong>{formatSeconds(actionB.durationMs)}</strong>
           </div>
-          <div>
-            <span>时长差</span>
+          <div className="duration-card">
+            <span className="duration-label">时间差</span>
             <strong>{formatSeconds(Math.abs(actionA.durationMs - actionB.durationMs))}</strong>
           </div>
         </div>
       )}
 
       {score && (
-        <details className="arena-explanation">
+        <details className="result-tech">
           <summary>技术详情</summary>
-          <p>{score.explanation}</p>
+          <p className="result-tech-text">{score.explanation}</p>
+          {actionA && actionB && (
+            <div className="result-tech-exports">
+              <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResult(buildExportData(score, actionA, actionB))}>
+                📥 导出 JSON
+              </button>
+              <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResultCSV(buildExportData(score, actionA, actionB))}>
+                📊 导出 CSV
+              </button>
+            </div>
+          )}
         </details>
       )}
 
-      {score && actionA && actionB && (
-        <div className="arena-exports">
-          <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResult(buildExportData(score, actionA, actionB))}>
-            📥 导出 JSON
-          </button>
-          <button className="btn btn-sm btn-ghost" onClick={() => downloadArenaResultCSV(buildExportData(score, actionA, actionB))}>
-            📊 导出 CSV
-          </button>
-        </div>
-      )}
-
-      <div className="button-row">
-        <button className="btn btn-primary" onClick={onReset}>
-          <RotateIcon /> 新一轮对战
+      <div className="result-actions">
+        <button className="btn btn-primary btn-lg" onClick={onReset}>
+          <RotateIcon /> 再来一局
         </button>
+        <a className="btn btn-ghost" href="#/dashboard">返回首页</a>
       </div>
     </section>
   );

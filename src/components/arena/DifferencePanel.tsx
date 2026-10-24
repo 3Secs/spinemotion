@@ -17,34 +17,42 @@ export default function DifferencePanel({
 }: Props) {
   if (!score) return null;
 
-  const diffs = score.jointDifferences.slice(0, 6);
+  const diffs = score.jointDifferences.slice(0, 3);
   const moments = score.keyMoments;
   const maxDurMs = actionA && actionB ? Math.max(actionA.durationMs, actionB.durationMs) : 1;
+  // Normalized-space scale hint: mean distance is in normalized image units
+  const maxDist = diffs.length > 0 ? diffs[0].meanDistance : 0;
 
   return (
     <div className="diff-panel">
       <h3 className="diff-heading">差异分析</h3>
 
-      {/* Joint ranking */}
+      {/* Top differences (2–3 body parts, Chinese names only) */}
       <div className="diff-joints">
         {diffs.map((jd) => {
           const isSel = selectedJoint === jd.landmarkIndex;
+          const pct = maxDist > 0 ? Math.round((jd.meanDistance / maxDist) * 100) : 0;
           return (
             <button
               key={jd.landmarkIndex}
               className={`diff-joint-chip ${isSel ? "is-selected" : ""}`}
               onClick={() => onSelectJoint(isSel ? null : jd.landmarkIndex)}
-              title={`均值 ${jd.meanDistance.toFixed(4)} 峰值 ${jd.maxDistance.toFixed(4)}`}
+              title={`差异程度 ${pct}% · 点击在回放中定位该部位`}
             >
-              <span className="diff-joint-idx">#{jd.landmarkIndex}</span>
               <span className="diff-joint-name">{jd.labelZh}</span>
-              <span className="diff-joint-val" style={{ opacity: Math.min(1, jd.meanDistance * 5 + 0.4) }}>
-                {jd.meanDistance.toFixed(3)}
+              <span className="diff-joint-bar">
+                <span style={{ width: `${Math.max(4, pct)}%` }} />
               </span>
+              <span className="diff-joint-val">{pct}%</span>
             </button>
           );
         })}
       </div>
+
+      {/* Plain-language note: what the number means */}
+      <p className="diff-note">
+        差异值表示两段动作在该部位上的轨迹偏离程度（数值越大差异越明显），用于趣味对比，不代表角度或临床异常。
+      </p>
 
       {/* Key moments timeline */}
       {moments.length > 0 && (
@@ -62,7 +70,7 @@ export default function DifferencePanel({
                   className="diff-moment-marker"
                   style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                   onClick={() => onJumpMs(m.startMs)}
-                  title={`${(m.startMs / 1000).toFixed(1)}s–${(m.endMs / 1000).toFixed(1)}s · 差异 ${m.meanDistance.toFixed(3)}`}
+                  title={`${(m.startMs / 1000).toFixed(1)}s–${(m.endMs / 1000).toFixed(1)}s · 差异 ${(m.meanDistance * 100).toFixed(0)}%`}
                 >
                   <span className="diff-moment-label">{`${(m.startMs / 1000).toFixed(1)}s`}</span>
                 </button>
@@ -75,13 +83,9 @@ export default function DifferencePanel({
             <span>0s</span>
             <span>{(maxDurMs / 1000).toFixed(1)}s</span>
           </div>
+          <p className="diff-timeline-hint">点击深色区段可跳转到该时间的回放位置</p>
         </div>
       )}
-
-      {/* Explanation */}
-      <div className="diff-explanation">
-        <p>{score.explanation}</p>
-      </div>
     </div>
   );
 }

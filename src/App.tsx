@@ -51,11 +51,11 @@ export default function App() {
 
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="brand-link" href="#/dashboard" aria-label="SpineMotion 2.0 首页">
+          <a className="brand-link" href="#/dashboard" aria-label="SpineMotion 首页">
             <BrandMark className="brand-mark" />
             <span className="brand-text">
-              <strong>SpineMotion <em>2.0</em></strong>
-              <span>HUMAN MOTION LAB</span>
+              <strong>SpineMotion</strong>
+              <span>YOUR MOVES · YOUR CHALLENGE</span>
             </span>
           </a>
 
@@ -65,7 +65,7 @@ export default function App() {
               href="#/dashboard"
               aria-current={route === "dashboard" ? "page" : undefined}
             >
-              控制台
+              首页
             </a>
             <a
               className={`nav-link ${route === "capture" ? "is-active" : ""}`}
@@ -81,7 +81,7 @@ export default function App() {
               aria-current={route === "ghost" ? "page" : undefined}
             >
               <GhostIcon />
-              Motion Ghost
+              动作分身
             </a>
             <a
               className={`nav-link ${route === "arena" ? "is-active" : ""}`}
@@ -89,13 +89,13 @@ export default function App() {
               aria-current={route === "arena" ? "page" : undefined}
             >
               <SwordsIcon />
-              Motion Arena
+              双人竞技
             </a>
           </nav>
 
           <div className="topbar-meta">
             <span className="meta-dot" />
-            <span className="meta-label">LOCAL INFERENCE</span>
+            <span className="meta-label">浏览器本地推理</span>
           </div>
         </div>
       </header>

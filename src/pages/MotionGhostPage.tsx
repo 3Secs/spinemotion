@@ -583,7 +583,7 @@ export function MotionGhostPage() {
       {countdown && (
         <div className="countdown-overlay">
           <span className="countdown-kicker">
-            {countdown.purpose === "record" ? "RECORDING IN" : "GHOST SYNC IN"}
+            {countdown.purpose === "record" ? "即将开始录制" : "即将跟随参考"}
           </span>
           <strong>{countdown.value}</strong>
           <span>
@@ -595,7 +595,7 @@ export function MotionGhostPage() {
       )}
       {!countdown && announcement && (
         <div className="countdown-overlay is-go">
-          <span className="countdown-kicker">ACTION START</span>
+          <span className="countdown-kicker">动作开始</span>
           <strong>{announcement}</strong>
           <span>{recordingState === "recording" ? "动作录制中" : "跟随 Ghost 开始"}</span>
         </div>
@@ -609,7 +609,7 @@ export function MotionGhostPage() {
         <div>
           <div className="eyebrow">
             <span className="eyebrow-line" />
-            PHASE 2 · MOTION GHOST
+            动作数字分身
           </div>
           <h1>动作数字分身</h1>
           <p>
@@ -618,9 +618,9 @@ export function MotionGhostPage() {
           </p>
         </div>
         <div className="heading-chips">
-          <span className="heading-chip"><GhostIcon /> GHOST OVERLAY</span>
-          <span className="heading-chip"><ScanIcon /> 33 LANDMARKS</span>
-          <span className="heading-chip"><ShieldIcon /> NO VIDEO</span>
+          <span className="heading-chip"><GhostIcon /> 幽灵叠加</span>
+          <span className="heading-chip"><ScanIcon /> 33 个关键点</span>
+          <span className="heading-chip"><ShieldIcon /> 不保存视频</span>
         </div>
       </header>
 
@@ -753,7 +753,7 @@ export function MotionGhostPage() {
 
           {referenceAction && (
             <section className="panel ghost-detail-panel">
-              <div className="panel-kicker">REFERENCE METADATA</div>
+              <div className="panel-kicker">参考动作信息</div>
               <h2>动作数据</h2>
               <div className="reference-meta-list">
                 <div><span>创建时间</span><strong>{formatTimestamp(referenceAction.createdAt)}</strong></div>
@@ -775,7 +775,7 @@ export function MotionGhostPage() {
           )}
 
           <section className="panel ghost-privacy-panel">
-            <div className="panel-kicker"><ShieldIcon /> LOCAL MOTION DATA</div>
+            <div className="panel-kicker"><ShieldIcon /> 本地动作数据</div>
             <h2>动作数据留在本机</h2>
             <p>
               动作库使用浏览器 localStorage；导出文件由你主动保存。Ghost

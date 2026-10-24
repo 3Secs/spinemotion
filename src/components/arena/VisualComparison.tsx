@@ -44,6 +44,39 @@ export default function VisualComparison({ actionA, actionB, captureMode }: Prop
   const upperBody = captureMode === "upper-body";
   const pb = useComparisonPlayback(actionA, actionB);
 
+  // Size the side-by-side canvases to the container (equal size, DPR-aware).
+  // The grid container holds two equal columns; divide width by 2.
+  useEffect(() => {
+    if (view !== "side") return;
+    const canvases = [refCanvasRef.current, imitCanvasRef.current];
+    if (!canvases[0]) return;
+
+    const container = canvases[0].parentElement?.parentElement;
+    const resize = () => {
+      const width = container?.clientWidth ?? 360;
+      const dpr = window.devicePixelRatio || 1;
+      // Each of the two grid columns gets half the container width (minus gap).
+      const cssW = Math.max(120, Math.floor((width - 8) / 2));
+      const cssH = Math.round(cssW * (3 / 2.2)); // portrait, ~1.37 aspect
+      for (const cv of canvases) {
+        if (!cv) continue;
+        const drawW = Math.round(cssW * dpr);
+        const drawH = Math.round(cssH * dpr);
+        if (cv.width !== drawW || cv.height !== drawH) {
+          cv.width = drawW;
+          cv.height = drawH;
+        }
+        cv.style.width = `${cssW}px`;
+        cv.style.height = `${cssH}px`;
+      }
+    };
+    resize();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(resize);
+    if (container) ro.observe(container);
+    return () => ro.disconnect();
+  }, [view]);
+
   // Render frame
   useEffect(() => {
     const frame = pb.frame;

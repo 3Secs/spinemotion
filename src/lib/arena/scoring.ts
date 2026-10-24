@@ -161,22 +161,34 @@ function estimateJointCoverage(pair: ArenaPreparedPair): number {
 }
 
 function estimateMotionAmplitude(pair: ArenaPreparedPair): number {
-  // Use ORIGINAL hip landmark coordinates (not normalized) so the measurement
-  // reflects real body displacement.
+  // Measure average displacement of ALL visible landmarks across consecutive
+  // frames (original coordinates). Hip-only measurement under-reported
+  // upper-body actions where the hip stays still, falsely reporting 0.000.
   const frames = pair.reference.frames;
   let totalDisplacement = 0;
-  let prevHip: { x: number; y: number } | null = null;
+  let prevLandmarks: { x: number; y: number; visibility: number }[] | null = null;
 
   for (const frame of frames) {
-    if (!frame.landmarks) continue;
-    const hip = frame.landmarks[23];
-    if (!hip || hip.visibility < QUALITY_THRESHOLDS.landmarkVisible) continue;
-    if (prevHip) {
-      totalDisplacement += Math.sqrt(
-        (hip.x - prevHip.x) ** 2 + (hip.y - prevHip.y) ** 2,
-      );
+    if (!frame.landmarks) {
+      prevLandmarks = null;
+      continue;
     }
-    prevHip = hip;
+    const cur = frame.landmarks;
+    if (prevLandmarks) {
+      let stepSum = 0;
+      let count = 0;
+      const prev = prevLandmarks;
+      for (let k = 0; k < prev.length && k < cur.length; k += 1) {
+        const pp = prev[k];
+        const cp = cur[k];
+        if (!pp || !cp) continue;
+        if (pp.visibility < QUALITY_THRESHOLDS.landmarkVisible || cp.visibility < QUALITY_THRESHOLDS.landmarkVisible) continue;
+        stepSum += Math.sqrt((cp.x - pp.x) ** 2 + (cp.y - pp.y) ** 2);
+        count += 1;
+      }
+      if (count > 0) totalDisplacement += stepSum / count;
+    }
+    prevLandmarks = cur;
   }
   return totalDisplacement;
 }
