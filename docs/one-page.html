@@ -23,23 +23,23 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-    line-height: 1.6;
-    padding: 0 0 48px;
+    line-height: 1.55;
+    padding: 0 0 24px;
   }
-  .page { max-width: 1080px; margin: 0 auto; padding: 56px 32px 0; }
+  .page { max-width: 1040px; margin: 0 auto; padding: 32px 32px 0; }
 
   /* ── Hero ── */
-  .hero { text-align: center; padding: 48px 0 40px; }
+  .hero { text-align: center; padding: 20px 0 16px; }
   .hero .mark {
     display: inline-flex; align-items: center; gap: 10px;
-    font-size: 13px; letter-spacing: 0.35em; color: var(--mint);
-    text-transform: uppercase; margin-bottom: 20px;
+    font-size: 12px; letter-spacing: 0.35em; color: var(--mint);
+    text-transform: uppercase; margin-bottom: 12px;
   }
   .hero .mark::before, .hero .mark::after {
     content: ""; width: 34px; height: 1px; background: var(--line);
   }
   .hero h1 {
-    font-size: clamp(40px, 7vw, 68px);
+    font-size: clamp(36px, 6vw, 56px);
     font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
     background: linear-gradient(120deg, #ffffff 20%, var(--cyan) 55%, var(--mint) 90%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -50,18 +50,18 @@
   }
   .hero .oneliner {
     max-width: 640px; margin: 18px auto 0;
-    font-size: 15px; color: var(--muted);
+    font-size: 14px; color: var(--muted);
   }
 
   /* ── Sections ── */
-  section { margin-top: 56px; }
+  section { margin-top: 30px; }
   .sec-label {
-    display: block; font-size: 12px; letter-spacing: 0.3em;
-    color: var(--cyan); text-transform: uppercase; margin-bottom: 8px;
+    display: block; font-size: 11px; letter-spacing: 0.3em;
+    color: var(--cyan); text-transform: uppercase; margin-bottom: 4px;
   }
   h2 {
     font-size: clamp(24px, 3.4vw, 32px); font-weight: 700;
-    letter-spacing: -0.02em; margin-bottom: 18px;
+    letter-spacing: -0.02em; margin-bottom: 10px;
   }
   p.body { color: var(--muted); font-size: 15px; max-width: 720px; }
 
@@ -69,20 +69,20 @@
   .xp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
   .xp-card {
     background: linear-gradient(150deg, rgba(18,30,50,0.85), rgba(9,16,28,0.9));
-    border: 1px solid var(--line); border-radius: 16px; padding: 24px 20px;
+    border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px;
   }
   .xp-card .num {
     font-size: 12px; letter-spacing: 0.25em; color: var(--amber); font-weight: 700;
   }
-  .xp-card h3 { font-size: 19px; margin: 8px 0 10px; }
-  .xp-card p { font-size: 13px; color: var(--muted); }
+  .xp-card h3 { font-size: 17px; margin: 6px 0 8px; }
+  .xp-card p { font-size: 12.5px; color: var(--muted); }
   .xp-card em { font-style: normal; color: var(--gold); font-weight: 600; }
 
   /* ── Features ── */
-  .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 4px; }
+  .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; margin-top: 2px; }
   .feat-list li {
     list-style: none; position: relative; padding-left: 22px;
-    font-size: 14px; color: var(--muted);
+    font-size: 13px; color: var(--muted);
   }
   .feat-list li::before {
     content: "◆"; position: absolute; left: 0; top: 0;
@@ -99,7 +99,7 @@
 
   /* ── Footer ── */
   .footer {
-    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
+    margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line);
     display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
     font-size: 12px; color: var(--dim);
   }
@@ -111,9 +111,11 @@
   }
   @media print {
     body { padding: 0; }
-    .page { max-width: 100%; padding: 24px 20px 0; }
-    section { margin-top: 32px; page-break-inside: avoid; }
-    .hero { padding: 24px 0 20px; }
+    .page { max-width: 100%; padding: 12px 16px 0; }
+    section { margin-top: 18px; page-break-inside: avoid; }
+    .hero { padding: 8px 0 6px; }
+    h1 { font-size: 44px !important; }
+    .tag { font-size: 15px !important; margin-top: 6px !important; }
   }
 </style>
 </head>
