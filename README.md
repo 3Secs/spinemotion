@@ -154,7 +154,7 @@ npm run preview      # 预览生产构建 → http://127.0.0.1:4173
 
 ## 9. 团队
 
--算法 / 工程：Niko
--设计 / 交互：Mako
+-算法 / 工程：李亚浩
+-设计 / 交互：施佳
 
 **MoonStone DreamUp · 提交材料清单：README / 代码仓库 / 本地 Demo / 一页作品介绍（docs/作品.html）**
